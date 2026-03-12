@@ -26,6 +26,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
+      { url: "/favicon.ico" },
       {
         url: "/icons/icon-light-192.png",
         sizes: "192x192",
@@ -51,7 +52,8 @@ export const metadata: Metadata = {
         media: "(prefers-color-scheme: dark)",
       },
     ],
-    apple: [{ url: "/icons/icon-light-512.png", sizes: "512x512", type: "image/png" }],
+    shortcut: ["/favicon.ico"],
+    apple: [{ url: "/icons/icon-dark-512.png", sizes: "512x512", type: "image/png" }],
   },
   appleWebApp: {
     capable: true,

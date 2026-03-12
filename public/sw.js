@@ -1,6 +1,7 @@
-const CACHE_NAME = "viaggiostyle-v1";
+const CACHE_NAME = "viaggiostyle-v2";
 const urlsToCache = [
   "/",
+  "/favicon.ico",
   "/manifest.webmanifest",
   "/icons/icon-light-192.png",
   "/icons/icon-light-512.png",
@@ -47,4 +48,3 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
-
