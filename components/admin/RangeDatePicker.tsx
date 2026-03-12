@@ -101,12 +101,12 @@ export default function RangeDatePicker({ startDate, endDate, onChange, isBlocke
                 ref={buttonRef}
                 type="button"
                 onClick={() => setOpen((prev) => !prev)}
-                className={`flex h-10 w-full items-center justify-between rounded-xl border border-border/30 bg-card/30 px-4 text-[13px] font-bold text-foreground transition-all hover:bg-card/50 ${className || ""}`}
+                className={`flex h-10 w-full items-center justify-between rounded-xl border border-border/50 bg-card/60 px-4 text-[13px] font-bold text-foreground transition-all hover:bg-card/80 ${className || ""}`}
             >
                 <span className={startDate ? "text-foreground" : "text-muted/40"}>
                     {displayText}
                 </span>
-                <CalendarIcon size={14} className="text-muted/60" />
+                <CalendarIcon size={14} className="text-muted/70" />
             </button>
 
             {open && typeof document !== "undefined" && panelStyle &&

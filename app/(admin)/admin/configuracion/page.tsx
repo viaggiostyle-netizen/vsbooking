@@ -557,7 +557,7 @@ export default function OrganizacionPage() {
                     <select
                       value={block.start}
                       onChange={(event) => updateBlock(block.id, "start", event.target.value)}
-                      className="mt-1 w-full rounded-2xl border border-surface bg-transparent px-3 py-2.5 text-base outline-none"
+                      className="schedule-select mt-1 w-full rounded-2xl border border-surface px-3 py-2.5 text-base outline-none"
                     >
                       {BASE_TIME_SLOTS.map((slot) => (
                         <option key={slot} value={slot}>
@@ -572,7 +572,7 @@ export default function OrganizacionPage() {
                     <select
                       value={block.end}
                       onChange={(event) => updateBlock(block.id, "end", event.target.value)}
-                      className="mt-1 w-full rounded-2xl border border-surface bg-transparent px-3 py-2.5 text-base outline-none"
+                      className="schedule-select mt-1 w-full rounded-2xl border border-surface px-3 py-2.5 text-base outline-none"
                     >
                       {BASE_TIME_SLOTS.map((slot) => (
                         <option key={slot} value={slot}>

@@ -36,24 +36,24 @@ export default function Calendar({
   }, [monthCursor])
 
   return (
-    <div className="w-full rounded-[24px] border border-border bg-card p-4">
+    <div className="w-full rounded-[22px] border border-border/60 bg-card/95 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.12)]">
       <div className="mb-4 flex items-center justify-between px-1">
         <button
           onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-muted/20 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-muted/70 hover:bg-foreground/5 transition-colors"
         >
           <ChevronLeft size={18} />
         </button>
         <p className="text-[14px] font-bold tracking-tight text-foreground/90 capitalize">{formatMonthYear(monthCursor)}</p>
         <button
           onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-muted/20 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-muted/70 hover:bg-foreground/5 transition-colors"
         >
           <ChevronRight size={18} />
         </button>
       </div>
 
-      <div className="mb-3 grid grid-cols-7 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-muted/30">
+      <div className="mb-3 grid grid-cols-7 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-muted/60">
         {"lu ma mi ju vi sa do".split(" ").map((day) => (
           <span key={day}>{day}</span>
         ))}
@@ -77,13 +77,13 @@ export default function Calendar({
               key={key}
               onClick={() => !blocked && onSelect(key)}
               disabled={blocked}
-              className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-semibold transition-all duration-300 ${selected
+              className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-semibold transition-all duration-300 ${selected
                 ? selectedClass
                 : blocked
-                  ? "text-muted/10 cursor-not-allowed"
+                  ? "text-muted/20 cursor-not-allowed"
                   : currentMonth
-                    ? "text-foreground/80 hover:bg-muted/20"
-                    : "text-muted/30"
+                    ? "text-foreground/90 hover:bg-foreground/5"
+                    : "text-muted/40"
                 }`}
             >
               {day.getDate()}

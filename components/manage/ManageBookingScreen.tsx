@@ -169,17 +169,29 @@ export default function ManageBookingScreen() {
       )}
 
       <Modal open={cancelModal} onClose={() => setCancelModal(false)} className="max-w-[520px]">
-        <h3 className="text-[26px] font-semibold leading-none">¿Seguro que quieres cancelar tu cita?</h3>
-        <p className="mt-3 text-[15px] text-muted">
-          Si cancelas tu cita no se podra revertir el cambio. Si lo haces, avisa al barbero.
-        </p>
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => setCancelModal(false)} className="rounded-[10px] px-5 py-2 text-[14px]">
-            Volver
-          </Button>
-          <Button variant="danger" onClick={confirmCancel} className="rounded-[10px] px-5 py-2 text-[14px]">
-            Cancelar cita
-          </Button>
+        <div className="rounded-[20px] border border-border bg-card p-6 shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
+          <h3 className="text-[24px] font-semibold leading-tight text-foreground">
+            ¿Seguro que quieres cancelar tu cita?
+          </h3>
+          <p className="mt-3 text-[14px] text-muted">
+            Si cancelas tu cita no se podra revertir el cambio. Si lo haces, avisa al barbero.
+          </p>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setCancelModal(false)}
+              className="w-full rounded-[12px] px-5 py-2 text-[14px] sm:w-auto"
+            >
+              Volver
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmCancel}
+              className="w-full rounded-[12px] px-5 py-2 text-[14px] sm:w-auto"
+            >
+              Cancelar cita
+            </Button>
+          </div>
         </div>
       </Modal>
     </section>

@@ -37,8 +37,8 @@ function ThemeLogo({
 }) {
   const candidates = useMemo(
     () => [
-      `/logos/logo-${tone}.webp`,
       `/logos/logo-${tone}.png`,
+      `/logos/logo-${tone}.webp`,
       `/images/logo-${tone}.webp`,
       `/images/logo-${tone}.png`,
     ],
