@@ -537,6 +537,7 @@ input {
 
 .dark .admin-shell .admin-header {
   background-color: #111111 !important;
+  border-bottom-color: #454545 !important;
 }
 
 .dark .admin-shell .admin-sidebar-header {
