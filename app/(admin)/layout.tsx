@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import AdminShell from "@/components/admin/AdminLayout"
@@ -78,6 +79,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [pushStatus, setPushStatus] = useState<"idle" | "loading" | "enabled" | "blocked">("idle")
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement | null>(null)
+  const [isWhitelistedAdmin, setIsWhitelistedAdmin] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -254,6 +256,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [status])
 
+  useEffect(() => {
+    if (status !== "authenticated") {
+      setIsWhitelistedAdmin(false)
+      return
+    }
+
+    let active = true
+    void (async () => {
+      try {
+        const response = await fetch("/api/auth/is-admin", { cache: "no-store" })
+        if (!response.ok) throw new Error("No se pudo validar el admin.")
+        const payload = (await response.json()) as { isAdmin?: boolean }
+        if (active) setIsWhitelistedAdmin(Boolean(payload.isAdmin))
+      } catch {
+        if (active) setIsWhitelistedAdmin(false)
+      }
+    })()
+
+    return () => {
+      active = false
+    }
+  }, [status])
+
 
 
   const renderSidebarFooter = (showLabels: boolean) => (
@@ -322,6 +347,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
+            {isWhitelistedAdmin && (
+              <Link
+                href="/admin/configuracion"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-surface bg-card text-foreground transition-all duration-300 ease-in-out hover:bg-[var(--hover)] sm:hidden"
+                aria-label="Configuracion"
+                title="Configuracion"
+              >
+                <Settings size={18} />
+              </Link>
+            )}
             <button
               type="button"
               onClick={handleNewTurn}

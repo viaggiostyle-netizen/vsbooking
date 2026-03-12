@@ -898,7 +898,7 @@ function getAppointmentStyle(status: Appointment["status"]) {
 
   if (canonical === "completed") {
     return {
-      containerClass: "border-surface border-l-4 border-l-[var(--accent)] bg-card",
+      containerClass: "border-surface border-l-4 border-l-emerald-500 bg-card",
       textClass: "text-foreground",
       secondaryTextClass: "text-muted",
     }
