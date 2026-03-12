@@ -188,8 +188,8 @@ export default function IngresosPage() {
             <DollarSign size={20} />
           </div>
           <div>
-            <h2 className="text-[15px] font-bold leading-none">{monthLabel(selectedMonth)}</h2>
-            <p className="mt-1 text-[11px] text-muted font-medium">Facturación y estadísticas</p>
+            <h2 className="text-[13px] font-bold leading-none sm:text-[15px]">{monthLabel(selectedMonth)}</h2>
+            <p className="mt-1 text-[10px] text-muted font-medium sm:text-[11px]">Facturación y estadísticas</p>
           </div>
         </div>
 
@@ -199,7 +199,7 @@ export default function IngresosPage() {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => setIsPickerOpen(!isPickerOpen)}
-              className="flex h-10 items-center gap-2 rounded-xl border border-border/30 bg-card/30 px-4 text-[13px] font-bold text-foreground transition-all hover:bg-card/50"
+              className="flex h-10 items-center gap-2 rounded-xl border border-border/30 bg-card/30 px-4 text-[12px] font-bold text-foreground transition-all hover:bg-card/50 sm:text-[13px]"
             >
               <Calendar size={14} className="text-muted" />
               {monthLabel(selectedMonth)}
@@ -301,7 +301,7 @@ export default function IngresosPage() {
           <section className="glass-card overflow-hidden">
             <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4 flex items-center gap-2">
               <Users size={16} className="text-muted" />
-              <h3 className="text-[14px] font-bold">Distribución de Clientes</h3>
+              <h3 className="text-[13px] font-bold sm:text-[14px]">Distribución de Clientes</h3>
             </div>
             <div className="p-5">
               <div className="space-y-4">
@@ -310,22 +310,22 @@ export default function IngresosPage() {
                     <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
                       <UserRoundPlus size={14} />
                     </div>
-                    <span className="text-[13px] font-semibold text-muted">Nuevos</span>
+                    <span className="text-[12px] font-semibold text-muted sm:text-[13px]">Nuevos</span>
                   </div>
-                  <span className="text-[15px] font-bold">{metrics.newClients}</span>
+                  <span className="text-[14px] font-bold sm:text-[15px]">{metrics.newClients}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
                       <UserRound size={14} />
                     </div>
-                    <span className="text-[13px] font-semibold text-muted">Recurrentes</span>
+                    <span className="text-[12px] font-semibold text-muted sm:text-[13px]">Recurrentes</span>
                   </div>
-                  <span className="text-[15px] font-bold">{metrics.recurrentClients}</span>
+                  <span className="text-[14px] font-bold sm:text-[15px]">{metrics.recurrentClients}</span>
                 </div>
                 <div className="mt-4 pt-4 border-t border-border/10">
                   <p className="text-[11px] font-bold text-muted/50 uppercase tracking-widest leading-none">Total Unicicidad</p>
-                  <p className="mt-2 text-2xl font-bold">{metrics.newClients + metrics.recurrentClients}</p>
+                  <p className="mt-2 text-xl font-bold sm:text-2xl">{metrics.newClients + metrics.recurrentClients}</p>
                 </div>
               </div>
             </div>
@@ -334,7 +334,7 @@ export default function IngresosPage() {
           <section className="glass-card overflow-hidden">
             <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4 flex items-center gap-2">
               <Clock3 size={16} className="text-muted" />
-              <h3 className="text-[14px] font-bold">Horas de Mayor Demanda</h3>
+              <h3 className="text-[13px] font-bold sm:text-[14px]">Horas de Mayor Demanda</h3>
             </div>
             <div className="p-5 space-y-4">
               {metrics.topHours.length === 0 ? (
@@ -345,7 +345,7 @@ export default function IngresosPage() {
                   const percentage = (count / maxCount) * 100
                   return (
                     <div key={time} className="space-y-2">
-                      <div className="flex justify-between text-[12px] font-bold">
+                      <div className="flex justify-between text-[11px] font-bold sm:text-[12px]">
                         <span>{time} hs</span>
                         <span className="text-muted">{count} turnos</span>
                       </div>
@@ -367,17 +367,17 @@ export default function IngresosPage() {
           <section className="glass-card overflow-hidden">
             <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4 flex items-center gap-2">
               <EyeOff size={16} className="text-rose-500" />
-              <h3 className="text-[14px] font-bold">Faltas y Cancelaciones</h3>
+              <h3 className="text-[13px] font-bold sm:text-[14px]">Faltas y Cancelaciones</h3>
             </div>
             <div className="p-5">
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-3xl font-bold text-rose-500">{metrics.noShowRate.toFixed(1)}%</p>
-                  <p className="mt-1 text-[12px] font-semibold text-muted">Tasa de No-Show</p>
+                  <p className="text-2xl font-bold text-rose-500 sm:text-3xl">{metrics.noShowRate.toFixed(1)}%</p>
+                  <p className="mt-1 text-[11px] font-semibold text-muted sm:text-[12px]">Tasa de No-Show</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold">{metrics.noShowCount}</p>
-                  <p className="text-[11px] font-bold text-muted/50 uppercase tracking-widest">Incidentes</p>
+                  <p className="text-[15px] font-bold sm:text-lg">{metrics.noShowCount}</p>
+                  <p className="text-[10px] font-bold text-muted/50 uppercase tracking-widest sm:text-[11px]">Incidentes</p>
                 </div>
               </div>
               <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-rose-500/10">
@@ -389,20 +389,20 @@ export default function IngresosPage() {
           <section className="glass-card overflow-hidden">
             <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4 flex items-center gap-2">
               <TrendingUp size={16} className="text-muted" />
-              <h3 className="text-[14px] font-bold">Vs. Período Anterior ({metrics.previousMonthLabel})</h3>
+              <h3 className="text-[13px] font-bold sm:text-[14px]">Vs. Período Anterior ({metrics.previousMonthLabel})</h3>
             </div>
             <div className="p-5 grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <p className="text-[11px] font-bold text-muted/50 uppercase tracking-widest">Crec. Clientes</p>
-                <div className={`flex items-center gap-1 text-[17px] font-bold ${metrics.comparisonClientsPct >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                  {metrics.comparisonClientsPct >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                <div className={`flex items-center gap-1 text-[15px] font-bold sm:text-[17px] ${metrics.comparisonClientsPct >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                  {metrics.comparisonClientsPct >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                   {formatPercent(metrics.comparisonClientsPct)}
                 </div>
               </div>
               <div className="space-y-1">
                 <p className="text-[11px] font-bold text-muted/50 uppercase tracking-widest">Crec. Ingresos</p>
-                <div className={`flex items-center gap-1 text-[17px] font-bold ${metrics.comparisonIncomePct >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                  {metrics.comparisonIncomePct >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                <div className={`flex items-center gap-1 text-[15px] font-bold sm:text-[17px] ${metrics.comparisonIncomePct >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                  {metrics.comparisonIncomePct >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                   {formatPercent(metrics.comparisonIncomePct)}
                 </div>
               </div>
@@ -437,7 +437,7 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition-all duration-300 ${active
+      className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[12px] font-bold transition-all duration-300 sm:text-[13px] ${active
         ? "bg-[var(--accent)] text-white shadow-lg shadow-[rgba(37,99,235,0.24)]"
         : "text-muted hover:text-foreground hover:bg-[color-mix(in_srgb,var(--accent)_12%,transparent)]"
         }`}
@@ -478,14 +478,14 @@ function StatCard({ icon, title, value, accent, trend, description }: StatCardPr
       </div>
 
       <div className="mt-4">
-        <p className="text-[11px] font-bold text-muted/50 uppercase tracking-widest">{title}</p>
-        <p className={`mt-1 text-3xl font-bold tracking-tight ${accent ? "text-emerald-500" : "text-foreground"}`}>
+        <p className="text-[10px] font-bold text-muted/50 uppercase tracking-widest sm:text-[11px]">{title}</p>
+        <p className={`mt-1 text-2xl font-bold tracking-tight sm:text-3xl ${accent ? "text-emerald-500" : "text-foreground"}`}>
           {value}
         </p>
       </div>
 
       {description && (
-        <p className="mt-4 text-[11px] font-medium text-muted/40">{description}</p>
+        <p className="mt-4 text-[10px] font-medium text-muted/40 sm:text-[11px]">{description}</p>
       )}
 
       {/* Background Decor */}

@@ -300,6 +300,21 @@ textarea {
   border-color: var(--foreground);
 }
 
+select.schedule-select {
+  background-color: var(--input);
+  color: var(--foreground);
+  color-scheme: light;
+}
+
+.dark select.schedule-select {
+  color-scheme: dark;
+}
+
+select.schedule-select option {
+  background-color: var(--input);
+  color: var(--foreground);
+}
+
 input {
   background-color: var(--input);
   color: var(--foreground);
@@ -405,7 +420,6 @@ input {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -508,11 +522,11 @@ input {
 }
 
 .dark .admin-shell .admin-sidebar-header.sidebar-divider {
-  border-color: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .dark .admin-shell .sidebar-divider:not(.admin-sidebar-header) {
-  background-color: #2a2a2a;
+  background-color: rgba(255, 255, 255, 0.18);
 }
 
 .dark .admin-shell {

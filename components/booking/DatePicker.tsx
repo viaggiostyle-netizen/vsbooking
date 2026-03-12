@@ -57,17 +57,17 @@ export default function DatePicker({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`flex h-9 w-full items-center justify-between rounded-xl border border-border/30 bg-card/30 px-3 text-[12px] font-semibold hover:bg-card/50 transition-colors outline-none cursor-pointer ${className || ""}`}
+        className={`flex h-10 w-full items-center justify-between rounded-xl border border-border/50 bg-card/60 px-3 text-[13px] font-semibold hover:bg-card/80 transition-colors outline-none cursor-pointer ${className || ""}`}
       >
         <span className={value ? "text-foreground" : "text-muted/40"}>
           {formatDisplayDate(value)}
         </span>
-        <CalendarIcon size={14} className="text-muted/60" />
+        <CalendarIcon size={14} className="text-muted/70" />
       </button>
 
       {/* Calendario Desplegable */}
       {open && (
-        <div className="calendar-dropdown w-[280px] sm:w-full mt-2 left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0">
+        <div className="calendar-dropdown mt-2 w-full">
           <Calendar
             value={value}
             onSelect={handleSelect}
