@@ -72,9 +72,21 @@ export async function fetchOrganizationFromSupabase(): Promise<OrganizationData 
 }
 
 export async function persistOrganizationToSupabase(data: OrganizationData): Promise<void> {
+  if (typeof window !== "undefined") {
+    const res = await fetch("/api/admin/organization", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { message?: string } | null
+      throw new Error(payload?.message ?? "No se pudo guardar la organizacion.")
+    }
+    return
+  }
+
   const supabase = getSupabaseClient()
   if (!supabase) return
-
   await persistOrganizationToLegacySchema(data)
 }
 

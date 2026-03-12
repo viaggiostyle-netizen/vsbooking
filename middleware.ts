@@ -11,15 +11,16 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const secret = process.env.NEXTAUTH_SECRET
   const token = await getToken({ req, secret })
+  const homeUrl = buildUrl("/", req)
 
   if (pathname.startsWith("/admin")) {
     if (!token?.email) {
-      return NextResponse.redirect(buildUrl("/auth", req))
+      return NextResponse.redirect(homeUrl)
     }
 
     const isAuthorized = await checkIfEmailIsAdmin(String(token.email))
     if (!isAuthorized) {
-      return NextResponse.rewrite(buildUrl("/404", req))
+      return NextResponse.redirect(homeUrl)
     }
   }
 
@@ -31,7 +32,7 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(buildUrl("/admin", req))
       }
 
-      return NextResponse.rewrite(buildUrl("/404", req))
+      return NextResponse.redirect(homeUrl)
     }
   }
 

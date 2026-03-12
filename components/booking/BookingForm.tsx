@@ -182,12 +182,12 @@ export default function BookingForm() {
         selectedTimeValue,
         selectedServices
       )
-      const bookingGroupId = createAppointment({ payload, promotions })
+      const bookingGroupId = await createAppointment({ payload, promotions })
 
       clearSelection()
       router.push(`/confirmation?group=${bookingGroupId}`)
     } catch {
-      setError("No se pudo validar la reserva. Intenta nuevamente.")
+      setError("No se pudo guardar la reserva. Intenta nuevamente.")
     } finally {
       setIsSubmitting(false)
     }

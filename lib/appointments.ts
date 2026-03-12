@@ -10,15 +10,47 @@ export type AppointmentStatus =
   | "no_vino_aviso"
   | "no_vino_no_aviso"
 
+async function bookingsApiPatch(body: { id: string; status?: string; date?: string; time?: string }) {
+  const res = await fetch("/api/bookings", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    credentials: "same-origin",
+  })
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { message?: string } | null
+    throw new Error(payload?.message ?? "No se pudo actualizar la reserva.")
+  }
+}
+
+async function bookingsApiDelete(id: string) {
+  const res = await fetch("/api/bookings", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+    credentials: "same-origin",
+  })
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { message?: string } | null
+    throw new Error(payload?.message ?? "No se pudo eliminar la reserva.")
+  }
+}
+
 export async function updateAppointmentStatus(
   appointmentId: string,
   status: any
 ) {
-  if (!supabase) throw new Error("Supabase client no disponible")
+  if (typeof window !== "undefined") {
+    await bookingsApiPatch({
+      id: appointmentId,
+      status: toLegacyAppointmentStatus(toCanonicalAppointmentStatus(status)),
+    })
+    return
+  }
 
+  if (!supabase) throw new Error("Supabase client no disponible")
   const canonicalStatus = toCanonicalAppointmentStatus(status)
 
-  // Intenta en 'bookings' q es la q tiene el cliente
   const { data: legacyData, error: legacyError } = await supabase
     .from("bookings")
     .update({
@@ -28,10 +60,8 @@ export async function updateAppointmentStatus(
     .eq("id", appointmentId)
     .select()
     .single()
-
   if (!legacyError) return legacyData
 
-  // Fallback a 'appointments'
   const { data, error } = await supabase
     .from("appointments")
     .update({
@@ -41,35 +71,29 @@ export async function updateAppointmentStatus(
     .eq("id", appointmentId)
     .select()
     .single()
-
   if (!error) return data
-
-  console.error(
-    `Error updating appointment status for ID ${appointmentId}:`,
-    error.message || error
-  )
+  console.error(`Error updating appointment status for ID ${appointmentId}:`, error.message || error)
   throw error
 }
 
 export async function cancelAppointment(appointmentId: string) {
-  if (!supabase) throw new Error("Supabase client no disponible")
+  if (typeof window !== "undefined") {
+    await bookingsApiPatch({ id: appointmentId, status: "cancelled" })
+    return
+  }
 
-  // Intenta en 'bookings'
+  if (!supabase) throw new Error("Supabase client no disponible")
   const { error: legacyError } = await supabase
     .from("bookings")
     .update({ status: "cancelled" })
     .eq("id", appointmentId)
   if (!legacyError) return
-
-  // Fallback a 'appointments'
   const { error } = await supabase
     .from("appointments")
     .update({ status: "cancelled" })
     .eq("id", appointmentId)
-
   if (!error) return
-
-  console.error(`Error cancelling appointment ID ${appointmentId}:`, error.message || error)
+  console.error(`Error cancelling appointment ID ${appointmentId}:`, error?.message || error)
   throw error
 }
 
@@ -78,19 +102,17 @@ export async function rescheduleAppointment(
   newDate: string,
   newTime: string
 ) {
-  if (!supabase) throw new Error("Supabase client no disponible")
+  if (typeof window !== "undefined") {
+    await bookingsApiPatch({ id: appointmentId, date: newDate, time: newTime })
+    return
+  }
 
-  // Intenta en 'bookings'
+  if (!supabase) throw new Error("Supabase client no disponible")
   const { error: legacyError } = await supabase
     .from("bookings")
-    .update({
-      date: newDate,
-      time: newTime
-    })
+    .update({ date: newDate, time: newTime })
     .eq("id", appointmentId)
   if (!legacyError) return
-
-  // Fallback a 'appointments'
   const { error } = await supabase
     .from("appointments")
     .update({
@@ -99,34 +121,31 @@ export async function rescheduleAppointment(
       updated_at: new Date().toISOString(),
     })
     .eq("id", appointmentId)
-
   if (!error) return
-
   console.error(
     `Error rescheduling appointment ID ${appointmentId} to ${newDate} ${newTime}:`,
-    error.message || error
+    error?.message || error
   )
   throw error
 }
 
 export async function deleteAppointment(appointmentId: string) {
-  if (!supabase) throw new Error("Supabase client no disponible")
+  if (typeof window !== "undefined") {
+    await bookingsApiDelete(appointmentId)
+    return
+  }
 
-  // Intenta en 'bookings'
+  if (!supabase) throw new Error("Supabase client no disponible")
   const { error: legacyError } = await supabase
     .from("bookings")
     .delete()
     .eq("id", appointmentId)
   if (!legacyError) return
-
-  // Fallback a 'appointments'
   const { error } = await supabase
     .from("appointments")
     .delete()
     .eq("id", appointmentId)
-
   if (!error) return
-
-  console.error(`Error deleting appointment ID ${appointmentId}:`, error.message || error)
+  console.error(`Error deleting appointment ID ${appointmentId}:`, error?.message || error)
   throw error
 }

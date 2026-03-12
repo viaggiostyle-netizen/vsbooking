@@ -12,6 +12,7 @@ import {
   UserX,
   EyeOff,
 } from "lucide-react"
+import DashboardCards from "@/components/admin/DashboardCards"
 import { useAppointments } from "@/context/AppointmentContext"
 import { useHasMounted } from "@/hooks/useHasMounted"
 import type { Appointment, AppointmentStatus } from "@/types/Appointment"
@@ -40,6 +41,40 @@ export default function AdminPage() {
   const totalEstimated = useMemo(
     () => todayAppointments.reduce((sum, item) => sum + item.price, 0),
     [todayAppointments]
+  )
+
+  const statCards = useMemo(
+    () => [
+      {
+        id: "turnos-hoy",
+        title: "Turnos hoy",
+        value: String(todayAppointments.length),
+        subtitle: `${pendingTurns.length} pendientes`,
+        icon: <CalendarDays size={16} />,
+      },
+      {
+        id: "completados",
+        title: "Completados",
+        value: String(completedTurns.length),
+        subtitle: formatMoney(completedTurns.reduce((sum, item) => sum + item.price, 0)),
+        icon: <CheckCircle2 size={16} className="text-emerald-400" />,
+      },
+      {
+        id: "total-estimado",
+        title: "Total estimado",
+        value: formatMoney(totalEstimated),
+        subtitle: "del día",
+        icon: <span className="text-sm">$</span>,
+      },
+      {
+        id: "proximo-turno",
+        title: "Próximo turno",
+        value: pendingTurns[0]?.time ?? "-",
+        subtitle: pendingTurns[0]?.clientName ?? "Sin turnos",
+        icon: <Clock3 size={16} />,
+      },
+    ],
+    [completedTurns, pendingTurns, todayAppointments.length, totalEstimated]
   )
 
   const hasMounted = useHasMounted()
@@ -78,12 +113,7 @@ export default function AdminPage() {
         <p className="mt-1 text-sm text-muted">Vista diaria de turnos y acciones rapidas.</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Turnos hoy" value={String(todayAppointments.length)} subtitle={`${pendingTurns.length} pendientes`} icon={<CalendarDays size={16} />} />
-        <StatCard title="Completados" value={String(completedTurns.length)} subtitle={formatMoney(completedTurns.reduce((sum, item) => sum + item.price, 0))} icon={<CheckCircle2 size={16} className="text-emerald-400" />} />
-        <StatCard title="Total estimado" value={formatMoney(totalEstimated)} subtitle="del día" icon={<span className="text-sm">$</span>} />
-        <StatCard title="Próximo turno" value={pendingTurns[0]?.time ?? "-"} subtitle={pendingTurns[0]?.clientName ?? "Sin turnos"} icon={<Clock3 size={16} />} />
-      </div>
+      <DashboardCards cards={statCards} />
 
       <section className="mt-8">
         <div className="mb-4 flex items-center gap-2">
@@ -190,19 +220,6 @@ function ActionIcon({ title, onClick, icon }: { title: string; onClick: () => vo
     <button title={title} onClick={onClick} className="rounded-2xl p-1.5 hover:bg-card">
       {icon}
     </button>
-  )
-}
-
-function StatCard({ title, value, subtitle, icon }: { title: string; value: string; subtitle: string; icon: React.ReactNode }) {
-  return (
-    <article className="card min-h-[140px] rounded-2xl border border-surface bg-surface p-6">
-      <div className="mb-2 flex items-center justify-between text-sm text-muted">
-        <span>{title}</span>
-        {icon}
-      </div>
-      <p className="text-[16px] font-medium leading-none">{value}</p>
-      <p className="mt-1 text-[12px] font-normal text-muted">{subtitle}</p>
-    </article>
   )
 }
 

@@ -23,7 +23,7 @@ type StoreState = {
   appointments: Appointment[]
   lastCreatedGroupId: string | null
   hydrateAppointments: () => void
-  createAppointment: (args: CreateAppointmentArgs) => string
+  createAppointment: (args: CreateAppointmentArgs) => Promise<string>
   findByEmail: (email: string) => Appointment[]
   cancelAppointment: (id: string) => void
   modifyAppointment: (id: string, patch: { date: string; time: string }) => void
@@ -64,7 +64,7 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
       set({ appointments: remote })
     })
   },
-  createAppointment: ({ payload, promotions }) => {
+  createAppointment: async ({ payload, promotions }) => {
     const bookingGroupId = createId()
 
     const serviceDurations = payload.services.map((service) => service.durationMin)
@@ -101,7 +101,21 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
     const next = [...get().appointments, ...created]
     persistPublicAppointments(next)
     syncWithAdminAppointments(next)
-    void upsertAppointmentsToSupabase(created)
+    set({
+      appointments: next,
+      lastCreatedGroupId: bookingGroupId,
+    })
+
+    try {
+      await upsertAppointmentsToSupabase(created)
+    } catch (error) {
+      const createdIds = new Set(created.map((item) => item.id))
+      const rollback = get().appointments.filter((item) => !createdIds.has(item.id))
+      persistPublicAppointments(rollback)
+      syncWithAdminAppointments(rollback)
+      set({ appointments: rollback, lastCreatedGroupId: null })
+      throw error
+    }
 
     if (created[0]) {
       void notifyAdminAppointmentEvent({
@@ -111,10 +125,7 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
         date: created[0].date,
         time: created[0].time,
       })
-    } set({
-      appointments: next,
-      lastCreatedGroupId: bookingGroupId,
-    })
+    }
 
     return bookingGroupId
   },
@@ -132,7 +143,7 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
     )
     persistPublicAppointments(next)
     syncWithAdminAppointments(next)
-    void patchAppointmentInSupabase(id, { status: "cancelled" })
+    void patchAppointmentInSupabase(id, { status: "cancelled" }, { clientEmail: current?.clientEmail })
     if (current) {
       void notifyAdminAppointmentEvent({
         eventType: "cancelled",
@@ -151,7 +162,7 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
     )
     persistPublicAppointments(next)
     syncWithAdminAppointments(next)
-    void patchAppointmentInSupabase(id, patch)
+    void patchAppointmentInSupabase(id, patch, { clientEmail: current?.clientEmail })
     if (current) {
       void notifyAdminAppointmentEvent({
         eventType: "modified",

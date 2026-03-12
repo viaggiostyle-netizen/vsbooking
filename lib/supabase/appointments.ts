@@ -89,6 +89,24 @@ export async function fetchAppointmentsFromSupabase(): Promise<Appointment[] | n
 export async function upsertAppointmentsToSupabase(
   appointments: Appointment[]
 ): Promise<void> {
+  if (typeof window !== "undefined" && appointments.length > 0) {
+    const res = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ appointments }),
+    })
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as
+        | { message?: string; details?: string | null }
+        | null
+      if (payload?.details) {
+        console.error("Supabase bookings error:", payload.details)
+      }
+      throw new Error(payload?.message ?? "No se pudieron crear las reservas.")
+    }
+    return
+  }
+
   const supabase = getSupabaseClient()
   if (!supabase || appointments.length === 0) return
 
@@ -140,8 +158,24 @@ export async function upsertAppointmentsToSupabase(
 
 export async function patchAppointmentInSupabase(
   id: string,
-  patch: AppointmentPatch
+  patch: AppointmentPatch,
+  options?: { clientEmail?: string }
 ): Promise<boolean> {
+  if (typeof window !== "undefined") {
+    const body: Record<string, unknown> = { id, ...patch }
+    if (options?.clientEmail != null) body.clientEmail = options.clientEmail
+    const res = await fetch("/api/bookings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { message?: string } | null
+      throw new Error(payload?.message ?? "No se pudo actualizar la reserva.")
+    }
+    return true
+  }
+
   const supabase = getSupabaseClient()
   if (!supabase) return false
 
