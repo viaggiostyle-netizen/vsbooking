@@ -496,20 +496,12 @@ input {
   background-color: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-.admin-shell .admin-sidebar-header.sidebar-divider {
-  border-color: #f4f4f4;
-}
-
-.admin-shell .sidebar-divider:not(.admin-sidebar-header) {
-  height: 1px;
-  background-color: #f4f4f4;
-}
-
 .admin-shell {
   --background: #f4f4f4;
   --sidebar: #ededed;
   --card: #ededed;
   --input: #f2f2f2;
+  --sidebar-divider: #0f172a;
 }
 
 .dark .admin-shell {
@@ -519,14 +511,24 @@ input {
   --input: #1c1c1c;
   --border: #1c1c1c;
   --hover: #262626;
+  --sidebar-divider: rgba(255, 255, 255, 0.18);
+}
+
+.admin-shell .admin-sidebar-header.sidebar-divider {
+  border-color: var(--sidebar-divider);
+}
+
+.admin-shell .sidebar-divider:not(.admin-sidebar-header) {
+  height: 1px;
+  background-color: var(--sidebar-divider);
 }
 
 .dark .admin-shell .admin-sidebar-header.sidebar-divider {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--sidebar-divider);
 }
 
 .dark .admin-shell .sidebar-divider:not(.admin-sidebar-header) {
-  background-color: rgba(255, 255, 255, 0.18);
+  background-color: var(--sidebar-divider);
 }
 
 .dark .admin-shell {

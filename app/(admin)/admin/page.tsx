@@ -18,6 +18,7 @@ import { useHasMounted } from "@/hooks/useHasMounted"
 import type { Appointment, AppointmentStatus } from "@/types/Appointment"
 
 const ARGENTINA_TZ = "America/Argentina/Buenos_Aires"
+const MANAGE_URL = "https://vsbooking-chi.vercel.app/manage"
 
 export default function AdminPage() {
   const { appointments, setAppointmentStatus, updateAppointment, deleteAppointment } = useAppointments()
@@ -183,6 +184,7 @@ function PendingTurnRow({
   onEdit: () => void
 }) {
   const phone = normalizePhoneForWa(appointment.clientPhone)
+  const whatsappMessage = buildWhatsappMessage(appointment)
 
   return (
     <article className="card rounded-2xl border border-surface bg-surface p-6">
@@ -201,7 +203,12 @@ function PendingTurnRow({
         </div>
 
         <div className="flex items-center gap-3 text-sm">
-          <a href={`https://wa.me/${phone}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-2xl border border-surface px-3 py-1.5 hover:bg-card">
+          <a
+            href={`https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 rounded-2xl border border-surface px-3 py-1.5 hover:bg-card"
+          >
             <MessageCircle size={14} className="text-emerald-400" /> WhatsApp
           </a>
           <ActionIcon title="Completar" onClick={() => onStatusChange("completed")} icon={<CheckCircle2 size={16} className="text-emerald-400" />} />
@@ -248,6 +255,40 @@ function normalizePhoneForWa(value: string) {
   }
 
   return normalized
+}
+
+function buildWhatsappMessage(appointment: Appointment) {
+  const dateLabel = formatDateForMessage(appointment.date)
+
+  return [
+    "Buenas! Te hablo desde ViaggioStyle, te queria recordar que agendaste una cita. Abajo te dejo los detalles para que no te olvides 👇",
+    "",
+    `Fecha: ${dateLabel}`,
+    `Hora: ${appointment.time}`,
+    `Servicio: ${appointment.service}`,
+    "",
+    `Total a pagar: ${formatMoney(appointment.price)}`,
+    "",
+    `Si surge algun inconveniente o la queres cancelar o modificar, porfavor ingresa a \"${MANAGE_URL}\" Ahi podras modificar y/o cancelar tu cita. Cualquier cosa tambien me podes mandar a mi!`,
+    "",
+    "Saludos, te espero! 🙂",
+  ].join("\n")
+}
+
+function formatDateForMessage(value: string) {
+  const [year, month, day] = value.split("-").map(Number)
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return value
+  }
+
+  const date = new Date(year, month - 1, day)
+  if (Number.isNaN(date.getTime())) return value
+
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date)
 }
 
 function formatMoney(value: number) {

@@ -22,7 +22,7 @@ export default function ManageBookingScreen() {
   const [editing, setEditing] = useState(false)
   const [modifyDate, setModifyDate] = useState(getTodayDateKeyArgentina())
   const [modifyTime, setModifyTime] = useState("")
-  const [error, setError] = useState<{ message: string; whatsappUrl: string; phone: string } | null>(null)
+  const [error, setError] = useState<{ message: string; whatsappUrl: string } | null>(null)
   const [targetAppointmentId, setTargetAppointmentId] = useState<string | null>(null)
 
   const appointments = useAppointmentsStore((state) => state.appointments)
@@ -62,7 +62,6 @@ export default function ManageBookingScreen() {
       setError({
         message: result.message ?? "No puedes cancelar este turno.",
         whatsappUrl: result.whatsappUrl,
-        phone: result.whatsappPhone ? `+${result.whatsappPhone}` : "",
       })
       return
     }
@@ -80,6 +79,17 @@ export default function ManageBookingScreen() {
 
   const openModify = (appointment: (typeof found)[number]) => {
     setTargetAppointmentId(appointment.id)
+    const result = evaluateCancellationRule(appointment.date, appointment.time, organization.settings)
+
+    if (!result.allowed) {
+      setError({
+        message: result.message ?? "No puedes modificar este turno.",
+        whatsappUrl: result.whatsappUrl,
+      })
+      setEditing(false)
+      return
+    }
+
     setModifyDate(appointment.date)
     setModifyTime("")
     setError(null)
@@ -88,6 +98,15 @@ export default function ManageBookingScreen() {
 
   const confirmModify = () => {
     if (!selected || !modifyDate || !modifyTime) return
+    const result = evaluateCancellationRule(selected.date, selected.time, organization.settings)
+    if (!result.allowed) {
+      setError({
+        message: result.message ?? "No puedes modificar este turno.",
+        whatsappUrl: result.whatsappUrl,
+      })
+      setEditing(false)
+      return
+    }
     modifyAppointment(selected.id, { date: modifyDate, time: modifyTime })
     setEditing(false)
     setSearched(false)
@@ -148,7 +167,7 @@ export default function ManageBookingScreen() {
           <p>{error.message}</p>
           {error.whatsappUrl && (
             <a href={error.whatsappUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-sm underline">
-              {error.phone || "Contactar por WhatsApp"}
+              Contacto
             </a>
           )}
         </div>

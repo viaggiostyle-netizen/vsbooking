@@ -26,7 +26,7 @@ export default function BookingSearch({ email, onEmailChange, onSearch }: Bookin
 
       <Button onClick={onSearch} className="h-[48px] w-full rounded-[12px] py-3 text-[15px] font-[600]">
         <Search size={16} />
-        Buscar reserva
+        Buscar cita
       </Button>
     </div>
   )

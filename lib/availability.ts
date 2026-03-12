@@ -60,7 +60,7 @@ export function getAvailableTimeSlots({
     if (!passesAdvanceWindow(date, start, now, organization.settings.minAdvanceBooking)) {
       return false
     }
-    return !hasOverlappingAppointment(start, duration, date, appointments, ignoreAppointmentId)
+    return !hasOverlappingAppointment(start, date, appointments, ignoreAppointmentId)
   })
 }
 
@@ -112,7 +112,7 @@ export function getAnnotatedSlots({
     if (!passesAdvanceWindow(date, time, now, organization.settings.minAdvanceBooking)) {
       return { time, status: "past_due" as SlotStatus }
     }
-    if (hasOverlappingAppointment(time, duration, date, appointments)) {
+    if (hasOverlappingAppointment(time, date, appointments)) {
       return { time, status: "booked" as SlotStatus }
     }
     return { time, status: "available" as SlotStatus }
@@ -127,23 +127,15 @@ function passesAdvanceWindow(date: string, time: string, now: Date, minAdvanceBo
 
 function hasOverlappingAppointment(
   start: string,
-  duration: number,
   date: string,
   appointments: Appointment[],
   ignoreAppointmentId?: string
 ) {
-  const startMin = timeToMinutes(start)
-  const endMin = startMin + duration
-
   return appointments.some((appointment) => {
     if (appointment.id === ignoreAppointmentId) return false
     if (appointment.status === "cancelled") return false
     if (appointment.date !== date) return false
-
-    const appointmentStart = timeToMinutes(appointment.time)
-    const appointmentEnd = appointmentStart + appointment.durationMin
-
-    return startMin < appointmentEnd && endMin > appointmentStart
+    return appointment.time === start
   })
 }
 

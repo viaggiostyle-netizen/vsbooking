@@ -97,75 +97,84 @@ export default function Sidebar({
         </div>
       </div>
 
-      <nav className="flex-1 space-y-5 px-3 py-4">
-        {sections.map((section) => (
-          <div key={section.id} className="space-y-1">
-            {section.items.map((item) => {
-              const active = isActivePath(activePath, item.href)
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
-                  className="relative block"
-                  aria-current={active ? "page" : undefined}
-                >
-                  <motion.div
-                    className={`group relative flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2 text-[14px] font-semibold transition-colors duration-200 ${
-                      active ? "text-[var(--accent)]" : "text-muted hover:text-foreground"
-                    }`}
-                    whileHover={reduceMotion ? undefined : { x: 3 }}
-                    transition={baseTransition}
+      <nav className="flex-1 px-3 py-4">
+        {sections.map((section, index) => (
+          <div key={section.id}>
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const active = isActivePath(activePath, item.href)
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    className="relative block"
+                    aria-current={active ? "page" : undefined}
                   >
-                    <span className="relative flex h-8 w-8 items-center justify-center">
-                      <AnimatePresence initial={false}>
-                        {active && (
-                          <motion.span
-                            layoutId={`sidebar-pill-${variant}`}
-                            className="absolute inset-0 rounded-full bg-[var(--accent)]/16 blur-[6px]"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={baseTransition}
-                          />
-                        )}
-                      </AnimatePresence>
-                      <motion.span
-                        className={`relative ${active ? "text-[var(--accent)]" : "text-muted"}`}
-                        whileHover={reduceMotion ? undefined : { scale: 1.08, rotate: -2 }}
-                        transition={baseTransition}
-                      >
-                        <Icon size={18} />
-                      </motion.span>
-                    </span>
-
-                    <span
-                      className={`truncate transition-all ${
-                        showLabels ? "opacity-100 max-w-[140px]" : "opacity-0 max-w-0"
+                    <motion.div
+                      className={`group relative flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2 text-[14px] font-semibold transition-colors duration-200 ${
+                        active ? "text-[var(--accent)]" : "text-muted hover:text-foreground"
                       }`}
+                      whileHover={reduceMotion ? undefined : { x: 3 }}
+                      transition={baseTransition}
                     >
-                      {item.label}
-                    </span>
+                      <span className="relative flex h-8 w-8 items-center justify-center">
+                        <AnimatePresence initial={false}>
+                          {active && (
+                            <motion.span
+                              layoutId={`sidebar-pill-${variant}`}
+                              className="absolute inset-0 rounded-full bg-[var(--accent)]/16 blur-[6px]"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={baseTransition}
+                            />
+                          )}
+                        </AnimatePresence>
+                        <motion.span
+                          className={`relative ${active ? "text-[var(--accent)]" : "text-muted"}`}
+                          whileHover={reduceMotion ? undefined : { scale: 1.08, rotate: -2 }}
+                          transition={baseTransition}
+                        >
+                          <Icon size={18} />
+                        </motion.span>
+                      </span>
 
-                    {active && (
-                      <motion.span
-                        layoutId={`sidebar-active-${variant}`}
-                        className="pointer-events-none absolute inset-y-1 left-1 right-1 -z-10 rounded-2xl bg-[var(--hover)]"
-                        transition={baseTransition}
-                      />
-                    )}
-                  </motion.div>
-                </Link>
-              )
-            })}
+                      <span
+                        className={`truncate transition-all ${
+                          showLabels ? "opacity-100 max-w-[140px]" : "opacity-0 max-w-0"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+
+                      {active && (
+                        <motion.span
+                          layoutId={`sidebar-active-${variant}`}
+                          className="pointer-events-none absolute inset-y-1 left-1 right-1 -z-10 rounded-2xl bg-[var(--hover)]"
+                          transition={baseTransition}
+                        />
+                      )}
+                    </motion.div>
+                  </Link>
+                )
+              })}
+            </div>
+
+            {index < sections.length - 1 && (
+              <div className="sidebar-divider my-4 -mx-3" aria-hidden="true" />
+            )}
           </div>
         ))}
       </nav>
 
       {footer ? (
-        <div className="mt-auto px-4 pb-4">
-          {typeof footer === "function" ? footer(showLabels) : footer}
+        <div className="mt-auto">
+          <div className="sidebar-divider" aria-hidden="true" />
+          <div className="px-4 pb-4 pt-3">
+            {typeof footer === "function" ? footer(showLabels) : footer}
+          </div>
         </div>
       ) : null}
     </motion.aside>

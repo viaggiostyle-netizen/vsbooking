@@ -31,12 +31,10 @@ export function evaluateCancellationRule(
     }
   }
 
-  const contactText = whatsappPhone ? ` Contacto: +${whatsappPhone}` : ""
-
   return {
     allowed: false,
     remainingHours,
-    message: `${settings.cancellationBlockedMessage}${contactText}`,
+    message: settings.cancellationBlockedMessage,
     whatsappUrl,
     whatsappPhone,
   }
