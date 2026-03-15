@@ -53,7 +53,7 @@ export default function AppointmentCreateModal({
     }
 
     const handleFormSubmit = async () => {
-        if (!clientName || !serviceId || !selectedDate || !selectedTime) return
+        if (!clientName || !selectedServiceId || !selectedDate || !selectedTime) return
 
         await onSubmit({
             clientName,
