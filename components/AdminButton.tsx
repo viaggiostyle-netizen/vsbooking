@@ -31,6 +31,7 @@ export default function AdminButton() {
         const response = await fetch("/api/auth/is-admin", {
           method: "GET",
           cache: "no-store",
+          credentials: "include",
           signal: controller.signal,
         })
 

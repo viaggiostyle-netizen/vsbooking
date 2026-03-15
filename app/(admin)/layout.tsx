@@ -101,8 +101,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       : pushStatus === "loading"
         ? "Activando notificaciones"
         : pushStatus === "blocked"
-      ? "Notificaciones bloqueadas por el navegador"
-      : "Activar notificaciones"
+          ? "Notificaciones bloqueadas por el navegador"
+          : "Activar notificaciones"
 
   const sidebarSections: SidebarSection[] = useMemo(
     () => [
@@ -265,7 +265,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     let active = true
     void (async () => {
       try {
-        const response = await fetch("/api/auth/is-admin", { cache: "no-store" })
+        const response = await fetch("/api/auth/is-admin", { cache: "no-store", credentials: "include" })
         if (!response.ok) throw new Error("No se pudo validar el admin.")
         const payload = (await response.json()) as { isAdmin?: boolean }
         if (active) setIsWhitelistedAdmin(Boolean(payload.isAdmin))
@@ -288,9 +288,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     >
       {dark ? <Moon size={18} /> : <Sun size={18} />}
       <span
-        className={`overflow-hidden transition-all ${
-          showLabels ? "opacity-100 max-w-[140px]" : "opacity-0 max-w-0"
-        }`}
+        className={`overflow-hidden transition-all ${showLabels ? "opacity-100 max-w-[140px]" : "opacity-0 max-w-0"
+          }`}
       >
         {dark ? "Modo oscuro" : "Modo claro"}
       </span>
