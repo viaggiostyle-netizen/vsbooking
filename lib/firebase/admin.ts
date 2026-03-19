@@ -1,5 +1,7 @@
 import admin from "firebase-admin"
 
+const DEFAULT_NOTIFICATION_ICON = "/icons/icon-light-192.png"
+
 function getAdminConfig() {
     const projectId = process.env.FIREBASE_PROJECT_ID
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
@@ -67,10 +69,25 @@ export async function notifyAdminTopic(title: string, body: string, data?: Recor
     if (!fb) return { success: false, error: "Firebase Admin not configured" }
 
     try {
+        const payloadData = {
+            ...(data || {}),
+            title,
+            body,
+            icon: DEFAULT_NOTIFICATION_ICON,
+        }
+
         const message = {
             notification: { title, body },
             topic: "admin-updates",
-            data: data || {},
+            data: payloadData,
+            webpush: {
+                notification: {
+                    title,
+                    body,
+                    icon: DEFAULT_NOTIFICATION_ICON,
+                    badge: DEFAULT_NOTIFICATION_ICON,
+                },
+            },
         }
         const response = await fb.messaging().send(message)
         return { success: true, response }
