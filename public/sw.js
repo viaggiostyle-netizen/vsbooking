@@ -7,6 +7,7 @@ const urlsToCache = [
   "/icons/icon-light-512.png",
   "/icons/icon-dark-192.png",
   "/icons/icon-dark-512.png",
+  "/icons/notification-badge.svg",
 ];
 
 const NETWORK_ONLY_PREFIXES = ["/api/", "/auth", "/admin"];

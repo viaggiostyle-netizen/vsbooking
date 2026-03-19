@@ -237,9 +237,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         const resolvedTitle = title || payload.data?.title?.trim() || "Nueva notificacion"
         const resolvedBody = body || payload.data?.body?.trim() || ""
         const icon = payload.notification?.icon || payload.data?.icon || "/icons/icon-light-192.png"
+        const badge = payload.data?.badge || "/icons/notification-badge.svg"
 
         try {
-          new Notification(resolvedTitle, { body: resolvedBody, icon })
+          new Notification(resolvedTitle, { body: resolvedBody, icon, badge })
         } catch {
           return
         }

@@ -3,6 +3,7 @@ importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-com
 
 const DEFAULT_NOTIFICATION_TITLE = "Nueva notificacion";
 const DEFAULT_NOTIFICATION_ICON = "/icons/icon-light-192.png";
+const DEFAULT_NOTIFICATION_BADGE = "/icons/notification-badge.svg";
 const DEFAULT_CLICK_ACTION = "/admin/agenda";
 
 const firebaseConfig = {
@@ -25,6 +26,7 @@ function buildNotificationFromPayload(payload) {
     DEFAULT_NOTIFICATION_TITLE;
   const body = payload.notification?.body || payload.data?.body || "";
   const icon = payload.notification?.icon || payload.data?.icon || DEFAULT_NOTIFICATION_ICON;
+  const badge = payload.notification?.badge || payload.data?.badge || DEFAULT_NOTIFICATION_BADGE;
   const url = payload.data?.click_action || DEFAULT_CLICK_ACTION;
 
   return {
@@ -32,7 +34,7 @@ function buildNotificationFromPayload(payload) {
     options: {
       body,
       icon,
-      badge: icon,
+      badge,
       data: { url },
     },
   };

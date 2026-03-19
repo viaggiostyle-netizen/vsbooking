@@ -1,6 +1,7 @@
 import admin from "firebase-admin"
 
 const DEFAULT_NOTIFICATION_ICON = "/icons/icon-light-192.png"
+const DEFAULT_NOTIFICATION_BADGE = "/icons/notification-badge.svg"
 
 function getAdminConfig() {
     const projectId = process.env.FIREBASE_PROJECT_ID
@@ -74,6 +75,7 @@ export async function notifyAdminTopic(title: string, body: string, data?: Recor
             title,
             body,
             icon: DEFAULT_NOTIFICATION_ICON,
+            badge: DEFAULT_NOTIFICATION_BADGE,
         }
 
         const message = {
@@ -85,7 +87,7 @@ export async function notifyAdminTopic(title: string, body: string, data?: Recor
                     title,
                     body,
                     icon: DEFAULT_NOTIFICATION_ICON,
-                    badge: DEFAULT_NOTIFICATION_ICON,
+                    badge: DEFAULT_NOTIFICATION_BADGE,
                 },
             },
         }
