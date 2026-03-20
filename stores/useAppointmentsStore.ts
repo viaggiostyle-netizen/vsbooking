@@ -117,16 +117,6 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
       throw error
     }
 
-    if (created[0]) {
-      void notifyAdminAppointmentEvent({
-        eventType: "created",
-        clientName: created[0].clientName,
-        service: created[0].service,
-        date: created[0].date,
-        time: created[0].time,
-      })
-    }
-
     return bookingGroupId
   },
   findByEmail: (email) => {
@@ -144,15 +134,6 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
     persistPublicAppointments(next)
     syncWithAdminAppointments(next)
     void patchAppointmentInSupabase(id, { status: "cancelled" }, { clientEmail: current?.clientEmail })
-    if (current) {
-      void notifyAdminAppointmentEvent({
-        eventType: "cancelled",
-        clientName: current.clientName,
-        service: current.service,
-        date: current.date,
-        time: current.time,
-      })
-    }
     set({ appointments: next })
   },
   modifyAppointment: (id, patch) => {
@@ -163,17 +144,6 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
     persistPublicAppointments(next)
     syncWithAdminAppointments(next)
     void patchAppointmentInSupabase(id, patch, { clientEmail: current?.clientEmail })
-    if (current) {
-      void notifyAdminAppointmentEvent({
-        eventType: "modified",
-        clientName: current.clientName,
-        service: current.service,
-        date: patch.date,
-        time: patch.time,
-        previousDate: current.date,
-        previousTime: current.time,
-      })
-    }
     set({ appointments: next })
   },
   getBookingGroup: (groupId) =>
@@ -181,26 +151,6 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
       .appointments.filter((appointment) => appointment.bookingGroupId === groupId)
       .sort((a, b) => a.time.localeCompare(b.time)),
 }))
-
-type AppointmentEventType = "created" | "modified" | "cancelled"
-
-type AppointmentEventPayload = {
-  eventType: AppointmentEventType
-  clientName: string
-  service: string
-  date: string
-  time: string
-  previousDate?: string
-  previousTime?: string
-}
-
-async function notifyAdminAppointmentEvent(payload: AppointmentEventPayload) {
-  await fetch("/api/notifications/trigger", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  }).catch(() => null)
-}
 export function buildBookingPayload(
   client: { name: string; phone: string; email: string },
   date: string,

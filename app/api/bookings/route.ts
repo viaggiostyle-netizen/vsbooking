@@ -6,6 +6,15 @@ import {
   toCanonicalAppointmentStatus,
   toLegacyAppointmentStatus,
 } from "@/lib/appointment-status"
+import { notifyAdminAppointmentEvent } from "@/lib/notifications/appointment-events"
+
+type BookingLookup = {
+  client_email: string
+  client_name: string
+  service_name: string
+  date: string
+  time: string
+}
 
 function getSupabaseRestConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -22,11 +31,11 @@ async function isAdmin(): Promise<boolean> {
   return checkIfEmailIsAdmin(email)
 }
 
-async function getBookingClientEmail(id: string): Promise<string | null> {
+async function getBookingById(id: string): Promise<BookingLookup | null> {
   const config = getSupabaseRestConfig()
   if (!config) return null
   const res = await fetch(
-    `${config.baseUrl}/bookings?id=eq.${encodeURIComponent(id)}&select=client_email`,
+    `${config.baseUrl}/bookings?id=eq.${encodeURIComponent(id)}&select=client_email,client_name,service_name,date,time`,
     {
       method: "GET",
       headers: {
@@ -37,8 +46,53 @@ async function getBookingClientEmail(id: string): Promise<string | null> {
     }
   )
   if (!res.ok) return null
-  const rows = (await res.json()) as { client_email: string }[]
-  return rows?.[0]?.client_email ?? null
+  const rows = (await res.json()) as BookingLookup[]
+  return rows?.[0] ?? null
+}
+
+function asString(value: unknown) {
+  return typeof value === "string" ? value.trim() : ""
+}
+
+function summarizeServices(appointments: unknown[]) {
+  const uniqueServices = [...new Set(
+    appointments
+      .map((value) =>
+        value && typeof value === "object"
+          ? asString((value as { service?: unknown; serviceName?: unknown }).serviceName ?? (value as { service?: unknown; serviceName?: unknown }).service)
+          : ""
+      )
+      .filter(Boolean)
+  )]
+
+  if (uniqueServices.length === 0) return "un turno"
+  if (uniqueServices.length === 1) return uniqueServices[0]
+  if (uniqueServices.length === 2) return `${uniqueServices[0]} + ${uniqueServices[1]}`
+  return `${uniqueServices[0]} + ${uniqueServices.length - 1} mas`
+}
+
+function buildCreatedNotificationPayload(appointments: unknown[]) {
+  const first = appointments.find((value) => value && typeof value === "object")
+  if (!first || typeof first !== "object") return null
+
+  const record = first as {
+    clientName?: unknown
+    date?: unknown
+    time?: unknown
+  }
+
+  const clientName = asString(record.clientName) || "Un cliente"
+  const date = asString(record.date)
+  const time = asString(record.time)
+
+  if (!date || !time) return null
+
+  return {
+    clientName,
+    service: summarizeServices(appointments),
+    date,
+    time,
+  }
 }
 
 export async function POST(req: Request) {
@@ -50,6 +104,7 @@ export async function POST(req: Request) {
     )
   }
 
+  const admin = await isAdmin()
   let appointments: unknown[]
   try {
     const body = await req.json()
@@ -103,6 +158,20 @@ export async function POST(req: Request) {
     )
   }
 
+  if (!admin) {
+    const notificationPayload = buildCreatedNotificationPayload(appointments)
+    if (notificationPayload) {
+      try {
+        await notifyAdminAppointmentEvent({
+          type: "created",
+          ...notificationPayload,
+        })
+      } catch (error) {
+        console.error("Bookings API POST notification error:", error)
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }
 
@@ -126,6 +195,12 @@ export async function PATCH(req: Request) {
   }
 
   const admin = await isAdmin()
+  const existingBooking = await getBookingById(body.id)
+
+  if (!existingBooking) {
+    return NextResponse.json({ message: "Reserva no encontrada." }, { status: 404 })
+  }
+
   if (!admin && body.clientEmail == null) {
     return NextResponse.json(
       { message: "Se requiere clientEmail para modificar una reserva." },
@@ -134,12 +209,8 @@ export async function PATCH(req: Request) {
   }
 
   if (!admin) {
-    const existingEmail = await getBookingClientEmail(body.id)
-    if (existingEmail == null) {
-      return NextResponse.json({ message: "Reserva no encontrada." }, { status: 404 })
-    }
     const normalized = (body.clientEmail ?? "").trim().toLowerCase()
-    if (normalized !== existingEmail.trim().toLowerCase()) {
+    if (normalized !== existingBooking.client_email.trim().toLowerCase()) {
       return NextResponse.json(
         { message: "No tienes permiso para modificar esta reserva." },
         { status: 403 }
@@ -181,6 +252,36 @@ export async function PATCH(req: Request) {
       { message: "No se pudo actualizar la reserva." },
       { status: 500 }
     )
+  }
+
+  if (!admin) {
+    const nextStatus = body.status ? toCanonicalAppointmentStatus(body.status) : null
+    const nextDate = body.date ?? existingBooking.date
+    const nextTime = body.time ?? existingBooking.time
+
+    try {
+      if (nextStatus === "cancelled") {
+        await notifyAdminAppointmentEvent({
+          type: "cancelled",
+          clientName: existingBooking.client_name,
+          service: existingBooking.service_name,
+          date: existingBooking.date,
+          time: existingBooking.time,
+        })
+      } else if (nextDate !== existingBooking.date || nextTime !== existingBooking.time) {
+        await notifyAdminAppointmentEvent({
+          type: "modified",
+          clientName: existingBooking.client_name,
+          service: existingBooking.service_name,
+          previousDate: existingBooking.date,
+          previousTime: existingBooking.time,
+          date: nextDate,
+          time: nextTime,
+        })
+      }
+    } catch (error) {
+      console.error("Bookings API PATCH notification error:", error)
+    }
   }
 
   return NextResponse.json({ ok: true })
