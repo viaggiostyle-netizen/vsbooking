@@ -6,6 +6,7 @@ import {
     onMessage,
     type MessagePayload,
 } from "firebase/messaging"
+import { registerAppServiceWorker } from "@/lib/service-worker-client"
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,8 +19,6 @@ const firebaseConfig = {
 }
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
-
-const FIREBASE_MESSAGING_SW_PATH = "/firebase-messaging-sw.js"
 
 const hasFirebaseClientConfig =
     Boolean(firebaseConfig.apiKey) &&
@@ -36,11 +35,7 @@ function getFirebaseApp() {
 }
 
 async function getMessagingRegistration() {
-    if (!("serviceWorker" in navigator)) return null
-
-    return navigator.serviceWorker
-        .register(FIREBASE_MESSAGING_SW_PATH)
-        .catch(() => null)
+    return registerAppServiceWorker()
 }
 
 type RequestPushTokenOptions = {

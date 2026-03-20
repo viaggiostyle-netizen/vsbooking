@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Clock3, MessageSquare, Phone, Save } from "lucide-react"
-import { toast } from "react-toastify"
 import { useSettings } from "@/context/SettingsContext"
+import { showErrorToast, showSuccessToast } from "@/components/ui/app-toast"
 import { buildWhatsappUrl, evaluateCancellationRule } from "@/lib/rulesUtils"
 
 export default function ReglasPage() {
@@ -42,7 +42,7 @@ export default function ReglasPage() {
             ? error.message
             : "No se pudo obtener la configuracion de cancelacion."
         setFeedback(message)
-        toast.error(message)
+        showErrorToast(message, { title: "No se pudo cargar la regla" })
       }
     })()
     // run once on mount
@@ -54,14 +54,14 @@ export default function ReglasPage() {
     if (!Number.isFinite(parsedHours) || parsedHours <= 0) {
       const message = "Ingresa una cantidad valida de horas (mayor a 0)."
       setFeedback(message)
-      toast.error(message)
+      showErrorToast(message, { title: "Horas invalidas" })
       return
     }
 
     if (!blockedMessage.trim()) {
       const message = "El mensaje de bloqueo es obligatorio."
       setFeedback(message)
-      toast.error(message)
+      showErrorToast(message, { title: "Mensaje obligatorio" })
       return
     }
 
@@ -86,12 +86,12 @@ export default function ReglasPage() {
 
         const message = "Cambios guardados correctamente."
         setFeedback(message)
-        toast.success(message)
+        showSuccessToast(message, { title: "Reglas actualizadas" })
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "No se pudo guardar la configuracion."
         setFeedback(message)
-        toast.error(message)
+        showErrorToast(message, { title: "No se pudo guardar" })
       }
     })()
   }

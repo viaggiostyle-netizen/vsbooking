@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, Plus, Shield, Trash2 } from "lucide-react"
-import { toast } from "react-toastify"
+import { showErrorToast, showSuccessToast } from "@/components/ui/app-toast"
 
 type AdminRecord = {
   id: string
@@ -99,14 +99,14 @@ export default function AdminsPage() {
 
       setAdmins((current) => [payload.admin as AdminRecord, ...current])
       setFeedback("Administrador agregado correctamente.")
-      toast.success("Administrador agregado correctamente.")
+      showSuccessToast("Administrador agregado correctamente.", { title: "Admin agregado" })
       setEmail("")
       setPendingEmail("")
       setShowConfirm(false)
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : "Error inesperado."
       setError(message)
-      toast.error(message)
+      showErrorToast(message, { title: "No se pudo agregar el admin" })
     } finally {
       setSaving(false)
     }
@@ -131,12 +131,12 @@ export default function AdminsPage() {
       }
 
       setFeedback("Administrador eliminado.")
-      toast.success("Administrador eliminado.")
+      showSuccessToast("Administrador eliminado.", { title: "Admin eliminado" })
     } catch (deleteError) {
       const message = deleteError instanceof Error ? deleteError.message : "Error inesperado."
       setAdmins(previous)
       setError(message)
-      toast.error(message)
+      showErrorToast(message, { title: "No se pudo eliminar el admin" })
     }
   }
 

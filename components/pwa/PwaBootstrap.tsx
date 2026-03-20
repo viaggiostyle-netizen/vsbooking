@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { registerAppServiceWorker } from "@/lib/service-worker-client"
 
 const APPLE_ICON_LIGHT = "/icons/icon-light-512.png"
 const APPLE_ICON_DARK = "/icons/icon-dark-512.png"
@@ -21,11 +22,6 @@ function syncAppleTouchIcon() {
   }
 }
 
-function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) return
-  navigator.serviceWorker.register("/sw.js").catch(() => {})
-}
-
 export default function PwaBootstrap() {
   useEffect(() => {
     syncAppleTouchIcon()
@@ -39,9 +35,11 @@ export default function PwaBootstrap() {
     })
 
     if (document.readyState === "complete") {
-      registerServiceWorker()
+      void registerAppServiceWorker()
     } else {
-      const onLoad = () => registerServiceWorker()
+      const onLoad = () => {
+        void registerAppServiceWorker()
+      }
       window.addEventListener("load", onLoad, { once: true })
     }
 
@@ -52,4 +50,3 @@ export default function PwaBootstrap() {
 
   return null
 }
-
