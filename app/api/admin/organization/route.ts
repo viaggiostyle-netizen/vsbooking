@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { checkIfEmailIsAdmin, normalizeEmail } from "@/lib/auth/admins"
+import { logAdminAction } from "@/lib/admin-logs"
 import { authOptions } from "@/lib/auth/options"
 import type { OrganizationData } from "@/lib/admin-organization"
 
@@ -12,6 +13,10 @@ const DAY_KEYS = [
   "friday",
   "saturday",
 ] as const
+
+function countActiveScheduleDays(data: OrganizationData) {
+  return DAY_KEYS.filter((dayKey) => data.schedules[dayKey].active).length
+}
 
 function getSupabaseRestConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -141,6 +146,12 @@ export async function POST(req: Request) {
         { status: 500 }
       )
     }
+
+    void logAdminAction({
+      action: "organization_updated",
+      actorEmail: auth.email,
+      targetLabel: `${data.services.length} servicios y ${countActiveScheduleDays(data)} dias activos`,
+    })
 
     return NextResponse.json({ ok: true })
   } catch (err) {

@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     void logAdminAction({
       action: "admin_added",
       actorEmail: auth.email,
-      targetEmail: admin.email,
+      targetLabel: admin.email,
     })
 
     return NextResponse.json({ admin }, { status: 201 })
@@ -115,7 +115,7 @@ export async function DELETE(req: Request) {
     void logAdminAction({
       action: "admin_removed",
       actorEmail: auth.email,
-      targetEmail: normalizeEmail(targetAdmin.email),
+      targetLabel: normalizeEmail(targetAdmin.email),
     })
 
     return NextResponse.json({ ok: true })
@@ -124,4 +124,3 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message }, { status: 500 })
   }
 }
-

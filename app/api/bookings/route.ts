@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
+import { logAdminAction } from "@/lib/admin-logs"
 import { checkIfEmailIsAdmin, normalizeEmail } from "@/lib/auth/admins"
 import { authOptions } from "@/lib/auth/options"
 import {
@@ -7,6 +8,7 @@ import {
   toLegacyAppointmentStatus,
 } from "@/lib/appointment-status"
 import { notifyAdminAppointmentEvent } from "@/lib/notifications/appointment-events"
+import type { Appointment } from "@/types/Appointment"
 
 type BookingLookup = {
   client_email: string
@@ -14,6 +16,7 @@ type BookingLookup = {
   service_name: string
   date: string
   time: string
+  status: Appointment["status"]
 }
 
 function getSupabaseRestConfig() {
@@ -24,18 +27,32 @@ function getSupabaseRestConfig() {
   return { baseUrl: `${baseUrl}/rest/v1`, serviceRoleKey: key }
 }
 
-async function isAdmin(): Promise<boolean> {
+type BookingPatchBody = {
+  id: string
+  clientEmail?: string
+  status?: Appointment["status"]
+  date?: string
+  time?: string
+  serviceId?: string
+  service?: string
+  durationMin?: number
+  price?: number
+  originalPrice?: number
+  finalPrice?: number
+}
+
+async function getAuthenticatedAdminEmail(): Promise<string | null> {
   const session = await getServerSession(authOptions)
   const email = normalizeEmail(session?.user?.email)
-  if (!email) return false
-  return checkIfEmailIsAdmin(email)
+  if (!email) return null
+  return (await checkIfEmailIsAdmin(email)) ? email : null
 }
 
 async function getBookingById(id: string): Promise<BookingLookup | null> {
   const config = getSupabaseRestConfig()
   if (!config) return null
   const res = await fetch(
-    `${config.baseUrl}/bookings?id=eq.${encodeURIComponent(id)}&select=client_email,client_name,service_name,date,time`,
+    `${config.baseUrl}/bookings?id=eq.${encodeURIComponent(id)}&select=client_email,client_name,service_name,date,time,status`,
     {
       method: "GET",
       headers: {
@@ -95,6 +112,38 @@ function buildCreatedNotificationPayload(appointments: unknown[]) {
   }
 }
 
+function buildBookingActivityLabel(args: {
+  clientName: string
+  service: string
+  date: string
+  time: string
+  status?: string
+}) {
+  const pieces = [args.clientName, args.service, `${args.date} ${args.time}`]
+  const statusLabel = formatStatusLabel(args.status)
+  if (statusLabel) pieces.push(statusLabel)
+  return pieces.filter(Boolean).join(" - ")
+}
+
+function formatStatusLabel(status: string | undefined) {
+  switch (status) {
+    case "completed":
+      return "Completado"
+    case "cancelled":
+      return "Cancelado"
+    case "no_vino_aviso":
+    case "no_show_with_notice":
+      return "No show con aviso"
+    case "no_vino_no_aviso":
+    case "no_show":
+      return "No show"
+    case "pending":
+      return "Pendiente"
+    default:
+      return ""
+  }
+}
+
 export async function POST(req: Request) {
   const config = getSupabaseRestConfig()
   if (!config) {
@@ -104,7 +153,8 @@ export async function POST(req: Request) {
     )
   }
 
-  const admin = await isAdmin()
+  const adminEmail = await getAuthenticatedAdminEmail()
+  const admin = Boolean(adminEmail)
   let appointments: unknown[]
   try {
     const body = await req.json()
@@ -158,7 +208,16 @@ export async function POST(req: Request) {
     )
   }
 
-  if (!admin) {
+  if (admin && adminEmail) {
+    const firstCreated = buildCreatedNotificationPayload(appointments)
+    if (firstCreated) {
+      void logAdminAction({
+        action: "appointment_created",
+        actorEmail: adminEmail,
+        targetLabel: buildBookingActivityLabel(firstCreated),
+      })
+    }
+  } else {
     const notificationPayload = buildCreatedNotificationPayload(appointments)
     if (notificationPayload) {
       try {
@@ -184,7 +243,7 @@ export async function PATCH(req: Request) {
     )
   }
 
-  let body: { id: string; clientEmail?: string; status?: string; date?: string; time?: string }
+  let body: BookingPatchBody
   try {
     body = await req.json()
     if (!body?.id || typeof body.id !== "string") {
@@ -194,7 +253,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ message: "JSON invalido." }, { status: 400 })
   }
 
-  const admin = await isAdmin()
+  const adminEmail = await getAuthenticatedAdminEmail()
+  const admin = Boolean(adminEmail)
   const existingBooking = await getBookingById(body.id)
 
   if (!existingBooking) {
@@ -226,6 +286,12 @@ export async function PATCH(req: Request) {
   }
   if (body.date != null) legacyPayload.date = body.date
   if (body.time != null) legacyPayload.time = body.time
+  if (body.service != null) legacyPayload.service_name = body.service
+  if (body.serviceId != null) legacyPayload.service_id = body.serviceId
+  if (typeof body.durationMin === "number") legacyPayload.duration_min = body.durationMin
+  if (typeof body.price === "number") legacyPayload.price = body.price
+  if (typeof body.originalPrice === "number") legacyPayload.original_price = body.originalPrice
+  if (typeof body.finalPrice === "number") legacyPayload.final_price = body.finalPrice
 
   if (Object.keys(legacyPayload).length === 0) {
     return NextResponse.json({ ok: true })
@@ -254,7 +320,49 @@ export async function PATCH(req: Request) {
     )
   }
 
-  if (!admin) {
+  if (admin && adminEmail) {
+    const nextStatus = body.status ? toCanonicalAppointmentStatus(body.status) : existingBooking.status
+    const nextDate = body.date ?? existingBooking.date
+    const nextTime = body.time ?? existingBooking.time
+    const nextService = body.service ?? existingBooking.service_name
+    const statusChanged =
+      body.status != null &&
+      toCanonicalAppointmentStatus(body.status) !== toCanonicalAppointmentStatus(existingBooking.status)
+    const detailsChanged =
+      nextDate !== existingBooking.date ||
+      nextTime !== existingBooking.time ||
+      nextService !== existingBooking.service_name ||
+      body.serviceId != null ||
+      typeof body.durationMin === "number" ||
+      typeof body.price === "number" ||
+      typeof body.originalPrice === "number" ||
+      typeof body.finalPrice === "number"
+
+    if (statusChanged) {
+      void logAdminAction({
+        action: "appointment_status_updated",
+        actorEmail: adminEmail,
+        targetLabel: buildBookingActivityLabel({
+          clientName: existingBooking.client_name,
+          service: nextService,
+          date: nextDate,
+          time: nextTime,
+          status: nextStatus,
+        }),
+      })
+    } else if (detailsChanged) {
+      void logAdminAction({
+        action: "appointment_updated",
+        actorEmail: adminEmail,
+        targetLabel: buildBookingActivityLabel({
+          clientName: existingBooking.client_name,
+          service: nextService,
+          date: nextDate,
+          time: nextTime,
+        }),
+      })
+    }
+  } else {
     const nextStatus = body.status ? toCanonicalAppointmentStatus(body.status) : null
     const nextDate = body.date ?? existingBooking.date
     const nextTime = body.time ?? existingBooking.time
@@ -288,8 +396,8 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const admin = await isAdmin()
-  if (!admin) {
+  const adminEmail = await getAuthenticatedAdminEmail()
+  if (!adminEmail) {
     return NextResponse.json({ message: "Not Found" }, { status: 404 })
   }
 
@@ -310,6 +418,8 @@ export async function DELETE(req: Request) {
   } catch {
     return NextResponse.json({ message: "JSON invalido." }, { status: 400 })
   }
+
+  const existingBooking = await getBookingById(body.id)
 
   let res = await fetch(
     `${config.baseUrl}/bookings?id=eq.${encodeURIComponent(body.id)}`,
@@ -344,6 +454,19 @@ export async function DELETE(req: Request) {
       { message: "No se pudo eliminar la reserva." },
       { status: 500 }
     )
+  }
+
+  if (existingBooking) {
+    void logAdminAction({
+      action: "appointment_deleted",
+      actorEmail: adminEmail,
+      targetLabel: buildBookingActivityLabel({
+        clientName: existingBooking.client_name,
+        service: existingBooking.service_name,
+        date: existingBooking.date,
+        time: existingBooking.time,
+      }),
+    })
   }
 
   return NextResponse.json({ ok: true })

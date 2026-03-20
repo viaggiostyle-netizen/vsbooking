@@ -14,6 +14,7 @@ import {
 import { listenAdminForegroundMessages } from "@/lib/firebase/client"
 import { signIn, signOut, useSession } from "next-auth/react"
 import {
+  Activity,
   Bell,
   CalendarDays,
   ChevronDown,
@@ -51,6 +52,7 @@ const secondaryNavItems = [
   { label: "Promociones", href: "/admin/promociones", icon: Percent },
   { label: "Horarios", href: "/admin/horarios", icon: Clock3 },
   { label: "Reglas", href: "/admin/reglas", icon: CircleSlash2 },
+  { label: "Actividad", href: "/admin/actividad", icon: Activity },
   { label: "Admins", href: "/admin/admins", icon: Shield },
 ]
 

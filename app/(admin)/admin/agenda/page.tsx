@@ -11,7 +11,6 @@ import { useTimeBlocks } from "@/context/TimeBlockContext"
 import {
   cancelAppointment,
   deleteAppointment as deleteFromSupabase,
-  rescheduleAppointment,
   updateAppointmentStatus,
 } from "@/lib/appointments"
 import {
@@ -23,7 +22,7 @@ import {
 import { toCanonicalAppointmentStatus } from "@/lib/appointment-status"
 import { fetchAppointments } from "@/lib/fetchAppointments"
 import { supabase } from "@/lib/supabase"
-import { persistOrganizationToSupabase, fetchOrganizationFromSupabase } from "@/lib/supabase/organization"
+import { fetchOrganizationFromSupabase } from "@/lib/supabase/organization"
 import { patchAppointmentInSupabase, upsertAppointmentsToSupabase } from "@/lib/supabase/appointments"
 import { getAvailableSlots, isDateBlocked, timeToMinutes } from "@/lib/scheduleUtils"
 import type { Appointment } from "@/types/Appointment"
@@ -346,25 +345,8 @@ export default function AgendaPage() {
     setSelectedAppointment((current) => (current ? { ...current, ...patch } : current))
 
     try {
-      await rescheduleAppointment(selectedAppointment.id, editDateKey, editTime)
-
-      const serviceChanged =
-        selectedEditService.id !== selectedAppointment.serviceId ||
-        selectedEditService.name !== selectedAppointment.service ||
-        selectedEditService.durationMin !== selectedAppointment.durationMin ||
-        selectedEditService.priceArs !== selectedAppointment.finalPrice
-
-      if (serviceChanged) {
-        const servicePatched = await patchAppointmentInSupabase(selectedAppointment.id, {
-          serviceId: selectedEditService.id,
-          service: selectedEditService.name,
-          durationMin: selectedEditService.durationMin,
-          price: selectedEditService.priceArs,
-          originalPrice: selectedEditService.priceArs,
-          finalPrice: selectedEditService.priceArs,
-        })
-        if (!servicePatched) throw new Error("No se pudo guardar la modificacion")
-      }
+      const servicePatched = await patchAppointmentInSupabase(selectedAppointment.id, patch)
+      if (!servicePatched) throw new Error("No se pudo guardar la modificacion")
 
       await refreshAgendaData()
       return true

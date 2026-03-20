@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
+import { logAdminAction } from "@/lib/admin-logs"
 import { authOptions } from "@/lib/auth/options"
 import { checkIfEmailIsAdmin, normalizeEmail } from "@/lib/auth/admins"
 import {
@@ -47,6 +48,11 @@ export async function POST(req: Request) {
     }
 
     await setAppointmentCancellationHours(parsed)
+    void logAdminAction({
+      action: "cancellation_policy_updated",
+      actorEmail: auth.email,
+      targetLabel: `${Math.floor(parsed)} horas de anticipacion`,
+    })
     return NextResponse.json({ ok: true })
   } catch (error) {
     const message =
@@ -54,4 +60,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ message }, { status: 500 })
   }
 }
-

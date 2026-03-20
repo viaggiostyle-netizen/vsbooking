@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import {
+  Activity,
   Calendar,
   CalendarDays,
   CheckCircle2,
@@ -12,8 +13,10 @@ import {
   UserX,
   EyeOff,
 } from "lucide-react"
+import AdminActivityFeed from "@/components/admin/AdminActivityFeed"
 import DashboardCards from "@/components/admin/DashboardCards"
 import { useAppointments } from "@/context/AppointmentContext"
+import { useAdminActivity } from "@/hooks/useAdminActivity"
 import { useHasMounted } from "@/hooks/useHasMounted"
 import type { Appointment, AppointmentStatus } from "@/types/Appointment"
 
@@ -22,6 +25,7 @@ const MANAGE_URL = "https://vsbooking-chi.vercel.app/manage"
 
 export default function AdminPage() {
   const { appointments, setAppointmentStatus, updateAppointment, deleteAppointment } = useAppointments()
+  const activity = useAdminActivity(5)
 
   const todayKey = useMemo(() => getTodayDateKeyInArgentina(), [])
   const todayAppointments = useMemo(
@@ -115,6 +119,23 @@ export default function AdminPage() {
       </header>
 
       <DashboardCards cards={statCards} />
+
+      <section className="mt-8">
+        <div className="mb-4 flex items-center gap-2">
+          <Activity size={16} />
+          <h2 className="text-[20px] font-semibold">Actividad reciente</h2>
+        </div>
+
+        <AdminActivityFeed
+          entries={activity.entries}
+          loading={activity.loading}
+          error={activity.error}
+          compact
+          showHeader={false}
+          showViewAllLink
+          emptyMessage="Aun no hay registros administrativos para mostrar."
+        />
+      </section>
 
       <section className="mt-8">
         <div className="mb-4 flex items-center gap-2">
