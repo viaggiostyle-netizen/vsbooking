@@ -25,6 +25,7 @@ import { supabase } from "@/lib/supabase"
 import { fetchOrganizationFromSupabase } from "@/lib/supabase/organization"
 import { patchAppointmentInSupabase, upsertAppointmentsToSupabase } from "@/lib/supabase/appointments"
 import { getAvailableSlots, isDateBlocked, timeToMinutes } from "@/lib/scheduleUtils"
+import { formatMoney } from "@/lib/utils"
 import type { Appointment } from "@/types/Appointment"
 import type { WorkBlock } from "@/types/WorkBlock"
 
@@ -131,6 +132,13 @@ export default function AgendaPage() {
         }),
     [turnDate, organizationWorkBlocks, settings, dateBlocks, timeBlocks, appointments]
   )
+
+  const appointmentsForSelectedDate = useMemo(() => {
+    const key = toDateKey(selectedDate)
+    return (hasMounted ? appointments : [])
+      .filter((item) => item.date === key)
+      .sort((a, b) => a.time.localeCompare(b.time))
+  }, [appointments, hasMounted, selectedDate])
 
   const editableServices = useMemo(() => {
     if (!selectedAppointment) return activeServices
@@ -552,7 +560,74 @@ export default function AgendaPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[26px] border border-surface bg-[color-mix(in_srgb,var(--card)_92%,transparent)] shadow-[0_20px_52px_rgba(15,23,42,0.10)] backdrop-blur-xl">
+      <div className="md:hidden space-y-4 mb-8">
+        {appointmentsForSelectedDate.length === 0 ? (
+          <div className="rounded-[26px] border border-surface bg-card/40 p-10 text-center backdrop-blur-xl">
+            <p className="text-sm font-medium text-muted">No hay citas para este día.</p>
+          </div>
+        ) : (
+          appointmentsForSelectedDate.map((item) => {
+            const canonical = toCanonicalAppointmentStatus(item.status)
+            const statusInfo = canonical === "completed"
+              ? { label: "Completado", chipClass: "bg-[#05AA72]/10 text-[#05AA72] ring-[#05AA72]/20" }
+              : canonical === "no_show_with_notice"
+              ? { label: "Aviso", chipClass: "bg-[#FF6900]/10 text-[#FF6900] ring-[#FF6900]/20" }
+              : canonical === "no_show"
+              ? { label: "Ausente", chipClass: "bg-[#FF637E]/10 text-[#FF637E] ring-[#FF637E]/20" }
+              : canonical === "cancelled"
+              ? { label: "Cancelado", chipClass: "bg-[#FB2C36]/10 text-[#FB2C36] ring-[#FB2C36]/20" }
+              : { label: "Pendiente", chipClass: "bg-blue-500/10 text-blue-400 ring-blue-500/20" }
+
+            const wa = item.clientPhone.replace(/\D/g, "")
+
+            return (
+              <div
+                key={item.id}
+                onClick={() => openAppointmentModal(item)}
+                className="group relative overflow-hidden rounded-[26px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl active:scale-[0.98] transition-all"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[17px] font-bold tracking-tight text-foreground">{item.time}</span>
+                      <span className="text-[17px] font-semibold tracking-tight text-foreground truncate max-w-[140px]">{item.clientName}</span>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${statusInfo.chipClass}`}>
+                        {statusInfo.label}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2 text-[14px]">
+                      <span className="font-medium text-muted">{item.service}</span>
+                      <span className="ml-1 font-bold text-foreground opacity-90">{formatMoney(item.finalPrice)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 self-center">
+                    <a
+                      href={`https://wa.me/${wa}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 text-[13px] font-bold text-foreground hover:opacity-80"
+                    >
+                      <div className="grid h-5 w-5 place-items-center rounded-full bg-emerald-500/10 text-emerald-500">
+                        <svg width="12" height="12" viewBox="0 0 24 24" className="fill-current" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 0 5.414 0 12.05c0 2.123.551 4.197 1.594 6.03l-1.692 6.175 6.32-1.658c1.776.968 3.774 1.478 5.817 1.479h.005c6.635 0 12.05-5.414 12.05-12.05 0-3.212-1.25-6.231-3.515-8.497z" />
+                        </svg>
+                      </div>
+                      WhatsApp
+                    </a>
+                    <div className="grid h-6 w-6 place-items-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <Check size={14} strokeWidth={3} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      <div className="hidden md:block overflow-hidden rounded-[26px] border border-surface bg-[color-mix(in_srgb,var(--card)_92%,transparent)] shadow-[0_20px_52px_rgba(15,23,42,0.10)] backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="min-w-[900px] w-full table-fixed border-separate border-spacing-0">
             <thead>

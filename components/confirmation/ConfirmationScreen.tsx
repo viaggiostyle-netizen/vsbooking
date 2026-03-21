@@ -53,17 +53,8 @@ export default function ConfirmationScreen({ groupId }: ConfirmationScreenProps)
   }
 
   const total = bookings.reduce((sum, item) => sum + item.finalPrice, 0)
-  const serviceLabel = bookings.map((item) => item.service).join(", ")
   const professional = "Camilo"
   const dateLabel = titleCase(formatLongDate(first.date))
-  const timeLabel = `${first.time} hs`
-
-  const details = [
-    { label: "Servicio", value: serviceLabel },
-    { label: "Profesional", value: professional },
-    { label: "Fecha", value: dateLabel },
-    { label: "Hora", value: timeLabel },
-  ]
 
   const handleConfirm = () => {
     if (viewState !== "review") return

@@ -1,12 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 import { signIn } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
-import { useTheme } from "next-themes"
 import Logo from "@/components/branding/Logo"
 
 function AuthContent() {
@@ -14,17 +13,9 @@ function AuthContent() {
   const [error, setError] = useState("")
   const [googleReady, setGoogleReady] = useState<boolean | null>(null)
   const [missingEnv, setMissingEnv] = useState<string[]>([])
-  const { theme, resolvedTheme } = useTheme()
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  )
 
   const searchParams = useSearchParams()
   const authError = searchParams.get("error")
-  const activeTheme = theme === "system" ? resolvedTheme : theme
-  const isDark = mounted ? activeTheme === "dark" : false
 
   const authErrorMessage = useMemo(() => {
     if (!authError) return ""
