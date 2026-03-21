@@ -38,7 +38,7 @@ async function bookingsApiDelete(id: string) {
 
 export async function updateAppointmentStatus(
   appointmentId: string,
-  status: any
+  status: AppointmentStatus
 ) {
   if (typeof window !== "undefined") {
     await bookingsApiPatch({

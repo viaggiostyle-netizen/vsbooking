@@ -14,8 +14,6 @@ const steps = [
 ]
 
 export default function Stepper({ currentStep }: StepperProps) {
-    const progressWidth = currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%';
-
     return (
         <div className="w-full max-w-md mx-auto mb-8">
 

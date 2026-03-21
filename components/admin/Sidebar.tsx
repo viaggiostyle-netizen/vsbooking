@@ -2,17 +2,15 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import type { ComponentType, ReactNode } from "react"
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
+import type { ReactNode } from "react"
+import { AnimatePresence, motion, useReducedMotion, type Transition } from "framer-motion"
+import { PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react"
 import Logo from "@/components/branding/Logo"
-
-type IconType = ComponentType<{ size?: number; className?: string }>
 
 export type SidebarItem = {
   label: string
   href: string
-  icon: IconType
+  icon: LucideIcon
 }
 
 export type SidebarSection = {
@@ -48,6 +46,7 @@ export default function Sidebar({
   const isDrawer = variant === "drawer"
   const shouldExpand = !isDrawer && collapsed && hovering
   const showLabels = isDrawer || !collapsed || shouldExpand
+  const emphasizedEase = [0.22, 1, 0.36, 1] as const
 
   const width = useMemo(() => {
     if (isDrawer) return 280
@@ -55,9 +54,9 @@ export default function Sidebar({
     return shouldExpand ? 220 : 86
   }, [collapsed, isDrawer, shouldExpand])
 
-  const baseTransition = reduceMotion
+  const baseTransition: Transition = reduceMotion
     ? { duration: 0 }
-    : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
+    : { duration: 0.28, ease: emphasizedEase }
 
   return (
     <motion.aside

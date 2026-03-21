@@ -1,6 +1,6 @@
 "use client"
 
-import { motion, useReducedMotion } from "framer-motion"
+import { motion, useReducedMotion, type Variants } from "framer-motion"
 import type { ReactNode } from "react"
 
 type DashboardCard = {
@@ -17,27 +17,28 @@ type DashboardCardsProps = {
 
 export default function DashboardCards({ cards }: DashboardCardsProps) {
   const reduceMotion = useReducedMotion()
+  const emphasizedEase = [0.22, 1, 0.36, 1] as const
 
-  const container = {
+  const container: Variants = {
     hidden: { opacity: 0, y: reduceMotion ? 0 : 8 },
     show: {
       opacity: 1,
       y: 0,
       transition: {
         duration: reduceMotion ? 0 : 0.3,
-        ease: [0.22, 1, 0.36, 1],
+        ease: emphasizedEase,
         staggerChildren: reduceMotion ? 0 : 0.08,
         delayChildren: reduceMotion ? 0 : 0.04,
       },
     },
   }
 
-  const item = {
+  const item: Variants = {
     hidden: { opacity: 0, y: reduceMotion ? 0 : 10 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: reduceMotion ? 0 : 0.25, ease: [0.22, 1, 0.36, 1] },
+      transition: { duration: reduceMotion ? 0 : 0.25, ease: emphasizedEase },
     },
   }
 

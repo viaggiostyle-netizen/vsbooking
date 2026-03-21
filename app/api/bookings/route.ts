@@ -71,6 +71,29 @@ function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : ""
 }
 
+function asNumber(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
+
+function normalizeAppointmentStatus(value: unknown): Appointment["status"] {
+  switch (value) {
+    case "completed":
+    case "cancelled":
+    case "no_show":
+    case "no_show_with_notice":
+    case "no_vino_aviso":
+    case "no_vino_no_aviso":
+    case "pending":
+      return value
+    default:
+      return "pending"
+  }
+}
+
 function summarizeServices(appointments: unknown[]) {
   const uniqueServices = [...new Set(
     appointments
@@ -117,7 +140,7 @@ function buildBookingActivityLabel(args: {
   service: string
   date: string
   time: string
-  status?: string
+  status?: Appointment["status"]
 }) {
   const pieces = [args.clientName, args.service, `${args.date} ${args.time}`]
   const statusLabel = formatStatusLabel(args.status)
@@ -125,7 +148,7 @@ function buildBookingActivityLabel(args: {
   return pieces.filter(Boolean).join(" - ")
 }
 
-function formatStatusLabel(status: string | undefined) {
+function formatStatusLabel(status: Appointment["status"] | undefined) {
   switch (status) {
     case "completed":
       return "Completado"
@@ -166,26 +189,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "JSON invalido." }, { status: 400 })
   }
 
-  const legacyPayload = appointments.map((a: Record<string, unknown>) => ({
-    id: a.id,
-    booking_group_id: a.bookingGroupId ?? a.id,
-    client_name: a.clientName,
-    client_phone: a.clientPhone,
-    client_email: a.clientEmail ?? "",
-    service_id: a.serviceId ?? "",
-    service_name: a.service,
-    duration_min: a.durationMin ?? 40,
-    price: a.price ?? 0,
-    original_price: a.originalPrice ?? a.price ?? 0,
-    final_price: a.finalPrice ?? a.price ?? 0,
-    promotion_id: a.promotionId ?? null,
-    date: a.date,
-    time: a.time,
-    status: toLegacyAppointmentStatus(
-      toCanonicalAppointmentStatus((a.status as string) ?? "pending")
-    ),
-    created_at: (a.createdAt as string) ?? new Date().toISOString(),
-  }))
+  const legacyPayload = appointments.map((value) => {
+    const a = isRecord(value) ? value : {}
+    const id = asString(a.id)
+    const price = asNumber(a.price, 0)
+
+    return {
+      id,
+      booking_group_id: asString(a.bookingGroupId) || id,
+      client_name: asString(a.clientName),
+      client_phone: asString(a.clientPhone),
+      client_email: asString(a.clientEmail),
+      service_id: asString(a.serviceId),
+      service_name: asString(a.service),
+      duration_min: asNumber(a.durationMin, 40),
+      price,
+      original_price: asNumber(a.originalPrice, price),
+      final_price: asNumber(a.finalPrice, price),
+      promotion_id: asString(a.promotionId) || null,
+      date: asString(a.date),
+      time: asString(a.time),
+      status: toLegacyAppointmentStatus(
+        toCanonicalAppointmentStatus(normalizeAppointmentStatus(a.status))
+      ),
+      created_at: asString(a.createdAt) || new Date().toISOString(),
+    }
+  })
 
   const res = await fetch(`${config.baseUrl}/bookings`, {
     method: "POST",

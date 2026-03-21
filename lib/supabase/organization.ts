@@ -87,6 +87,8 @@ export async function persistOrganizationToSupabase(data: OrganizationData): Pro
 
   const supabase = getSupabaseClient()
   if (!supabase) return
+  const persistedInNewSchema = await persistOrganizationToNewSchema(data)
+  if (persistedInNewSchema) return
   await persistOrganizationToLegacySchema(data)
 }
 

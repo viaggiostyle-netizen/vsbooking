@@ -15,6 +15,26 @@ type AppointmentRow = {
   created_at: string
 }
 
+type LegacyAppointmentRow = {
+  id: string
+  booking_group_id?: string | null
+  client_name: string
+  client_phone: string
+  client_email?: string | null
+  service_id?: string | null
+  service_name?: string | null
+  service?: string | null
+  duration_min?: number | null
+  price?: number | null
+  original_price?: number | null
+  final_price?: number | null
+  promotion_id?: string | null
+  date: string
+  time: string
+  status: Appointment["status"] | string
+  created_at: string
+}
+
 export async function fetchAppointments(): Promise<Appointment[]> {
   if (!supabase) return []
 
@@ -48,8 +68,25 @@ export async function fetchAppointments(): Promise<Appointment[]> {
     .filter((item): item is Appointment => item !== null)
 }
 
-function normalizeLegacyRow(item: any): Appointment | null {
-  // Mapeo básico de legacy a Appointment
+function normalizeLegacyRow(value: unknown): Appointment | null {
+  if (!value || typeof value !== "object") return null
+  const item = value as Partial<LegacyAppointmentRow>
+
+  if (
+    typeof item.id !== "string" ||
+    typeof item.client_name !== "string" ||
+    typeof item.client_phone !== "string" ||
+    typeof item.date !== "string" ||
+    typeof item.time !== "string" ||
+    typeof item.status !== "string" ||
+    typeof item.created_at !== "string"
+  ) {
+    return null
+  }
+
+  const status = normalizeStatus(item.status)
+  if (!status) return null
+
   return {
     id: item.id,
     bookingGroupId: item.booking_group_id || item.id,
@@ -57,7 +94,7 @@ function normalizeLegacyRow(item: any): Appointment | null {
     clientPhone: item.client_phone,
     clientEmail: item.client_email || "",
     serviceId: item.service_id || "",
-    service: item.service_name || item.service,
+    service: item.service_name || item.service || "",
     durationMin: item.duration_min || 0,
     price: item.price || 0,
     originalPrice: item.original_price || item.price || 0,
@@ -65,8 +102,8 @@ function normalizeLegacyRow(item: any): Appointment | null {
     promotionId: item.promotion_id || null,
     date: item.date,
     time: item.time,
-    status: item.status,
-    createdAt: item.created_at
+    status,
+    createdAt: item.created_at,
   }
 }
 

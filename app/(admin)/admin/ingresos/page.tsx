@@ -569,7 +569,6 @@ function toMonthKeyFromDateKey(dateKey: string) { return dateKey.slice(0, 7) }
 function percentageDiff(current: number, previous: number) { if (previous === 0) return current === 0 ? 0 : 200; return ((current - previous) / previous) * 100 }
 function formatPercent(value: number) { const sign = value >= 0 ? "+" : ""; return `${sign}${value.toFixed(1)}%` }
 function formatMoney(value: number) { return `$ ${value.toLocaleString("es-AR")}` }
-function formatMoneyShort(value: number) { if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`; return `$${value}` }
 function getNowArgentina() { const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: ARGENTINA_TZ, year: "numeric", month: "2-digit", day: "2-digit" }); const [year, month, day] = formatter.format(new Date()).split("-").map(Number); return new Date(year, month - 1, day) }
 function startOfMonth(date: Date) { return new Date(date.getFullYear(), date.getMonth(), 1) }
 function addMonths(date: Date, months: number) { return new Date(date.getFullYear(), date.getMonth() + months, 1) }

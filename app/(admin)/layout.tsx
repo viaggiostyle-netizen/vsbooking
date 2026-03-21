@@ -15,7 +15,6 @@ import { listenAdminForegroundMessages } from "@/lib/firebase/client"
 import { signIn, signOut, useSession } from "next-auth/react"
 import {
   Activity,
-  Bell,
   CalendarDays,
   ChevronDown,
   CircleSlash2,
@@ -105,6 +104,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         : pushStatus === "blocked"
           ? "Notificaciones bloqueadas por el navegador"
           : "Activar notificaciones"
+  const isPushEnabled = pushStatus === "enabled"
+  const isPushLoading = pushStatus === "loading"
+  const isPushBlocked = pushStatus === "blocked"
 
   const sidebarSections: SidebarSection[] = useMemo(
     () => [
@@ -162,7 +164,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     setUserMenuOpen(false)
     const token = pushToken || getStoredAdminPushToken()
     if (token) {
-      await disableAdminPushNotifications(token)
+      await disableAdminPushNotifications()
     }
     await signOut({ callbackUrl: "/auth" })
   }
@@ -186,6 +188,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
 
     setPushStatus("idle")
+  }
+
+  const handlePushToggle = async () => {
+    if (isPushLoading) return
+    if (isPushEnabled) return
+    await handleEnablePush()
   }
 
   useEffect(() => {
@@ -374,17 +382,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             <button
               type="button"
-              onClick={() => void handleEnablePush()}
-              className={`inline-flex h-10 items-center justify-center rounded-xl border border-surface px-3 transition-all duration-300 ease-in-out active:scale-[0.98] ${pushStatus === "enabled"
-                ? "bg-[var(--accent)] text-white hover:bg-[var(--accent)]"
-                : pushStatus === "blocked"
-                  ? "bg-rose-500/10 text-rose-500 hover:bg-rose-500/20"
-                  : "bg-card text-foreground hover:bg-[var(--hover)]"
-                }`}
+              onClick={() => void handlePushToggle()}
+              disabled={isPushLoading}
+              className={`admin-push-toggle ${isPushEnabled ? "is-enabled" : ""} ${isPushBlocked ? "is-blocked" : ""} ${isPushLoading ? "is-loading" : ""}`}
               aria-label={pushButtonLabel}
+              aria-pressed={isPushEnabled}
               title={pushButtonLabel}
             >
-              <Bell size={18} className={pushStatus === "loading" ? "animate-pulse" : ""} />
+              <span className="admin-push-toggle__track" aria-hidden="true">
+                <span className="admin-push-toggle__thumb">
+                  <span className="admin-push-toggle__bell" />
+                </span>
+              </span>
+              <span className="sr-only">{pushButtonLabel}</span>
             </button>
             <div className="relative" ref={userMenuRef}>
               <button
@@ -395,9 +405,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
               >
-                <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-full border border-surface bg-[var(--hover)] text-[10px] font-bold uppercase">
+                <span
+                  className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-full border border-surface bg-[var(--hover)] text-[10px] font-bold uppercase"
+                  style={
+                    userImage
+                      ? {
+                        backgroundImage: `url("${userImage}")`,
+                        backgroundPosition: "center",
+                        backgroundSize: "cover",
+                      }
+                      : undefined
+                  }
+                >
                   {userImage ? (
-                    <img src={userImage} alt={userName} className="h-full w-full object-cover" />
+                    <span className="sr-only">{userName}</span>
                   ) : (
                     userInitial
                   )}

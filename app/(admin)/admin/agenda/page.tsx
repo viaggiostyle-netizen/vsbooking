@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Calendar, ChevronDown, ChevronLeft, ChevronRight, X, Check, UserX, EyeOff, XCircle } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Check, UserX, EyeOff, XCircle } from "lucide-react"
 import AppointmentEditModal from "@/components/admin/AppointmentEditModal"
 import AppointmentCreateModal from "@/components/admin/AppointmentCreateModal"
 import { useAppointments } from "@/context/AppointmentContext"
@@ -59,11 +59,8 @@ export default function AgendaPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [organizationData, setOrganizationData] = useState(() => readOrganizationData())
 
-  const [clientName, setClientName] = useState("")
-  const [phone, setPhone] = useState("")
   const [turnDate, setTurnDate] = useState<Date | null>(null)
   const [turnTime, setTurnTime] = useState("")
-  const [serviceId, setServiceId] = useState("")
   const [error, setError] = useState("")
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
   const [isServicePickerOpen, setIsServicePickerOpen] = useState(false)
@@ -175,23 +172,12 @@ export default function AgendaPage() {
   ])
 
   const selectedTurnTime = availableTurnTimes.includes(turnTime) ? turnTime : ""
-  const selectedServiceId = activeServices.some((service) => service.id === serviceId)
-    ? serviceId
-    : activeServices[0]?.id ?? ""
-  const selectedService =
-    activeServices.find((service) => service.id === selectedServiceId) ?? null
-
   const openCreateTurnModal = useCallback(() => {
     const latestOrganization = readOrganizationData()
     setOrganizationData(latestOrganization)
 
-    const latestActive = latestOrganization.services.filter((service) => service.active)
-
-    setClientName("")
-    setPhone("")
     setTurnDate(null)
     setTurnTime("")
-    setServiceId(latestActive[0]?.id ?? "")
     setError("")
     setMonthCursor(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1))
     setIsDatePickerOpen(false)
@@ -704,10 +690,6 @@ export default function AgendaPage() {
   )
 }
 
-function FieldLabel({ text }: { text: string }) {
-  return <p className="text-[13px] font-semibold text-foreground">{text}</p>
-}
-
 function MonthPicker({
   monthCursor,
   selectedDate,
@@ -799,18 +781,6 @@ function formatWeekRange(start: Date, end: Date) {
 function formatWeekDay(date: Date) {
   const day = new Intl.DateTimeFormat("es-AR", { weekday: "short" }).format(date)
   return day.replace(".", "").toUpperCase()
-}
-
-function formatInputDate(date: Date) {
-  return new Intl.DateTimeFormat("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date)
-}
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("es-AR").format(value)
 }
 
 function getTodayInArgentina() {

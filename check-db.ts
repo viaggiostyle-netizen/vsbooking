@@ -9,7 +9,7 @@ async function checkTables() {
     }
 
     // Try to query information_schema.tables to see what we have
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('appointments')
         .select('*')
         .limit(1);
@@ -20,7 +20,7 @@ async function checkTables() {
         console.log("Appointments table exists!");
     }
 
-    const { data: data2, error: error2 } = await supabase
+    const { error: error2 } = await supabase
         .from('bookings')
         .select('*')
         .limit(1);

@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertCircle, CheckCircle2, Info, TriangleAlert, X } from "lucide-react"
+import { AlertCircle, Check, Info, TriangleAlert, X } from "lucide-react"
 import {
   Slide,
   ToastContainer,
@@ -13,7 +13,7 @@ function AppToastIcon({ type }: IconProps) {
   if (type === "success") {
     return (
       <span className="app-toast-icon app-toast-icon--success" aria-hidden>
-        <CheckCircle2 size={18} />
+        <Check size={18} />
       </span>
     )
   }

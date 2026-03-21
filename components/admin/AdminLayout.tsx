@@ -2,7 +2,13 @@
 
 import { useEffect } from "react"
 import type { ReactNode } from "react"
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  type Transition,
+  type Variants,
+} from "framer-motion"
 import AdminHeader from "@/components/layout/AdminHeader"
 
 type AdminLayoutProps = {
@@ -25,6 +31,7 @@ export default function AdminLayout({
   contentKey = "admin",
 }: AdminLayoutProps) {
   const reduceMotion = useReducedMotion()
+  const emphasizedEase = [0.22, 1, 0.36, 1] as const
 
   useEffect(() => {
     if (!isSidebarOpen) return
@@ -37,20 +44,20 @@ export default function AdminLayout({
     return () => window.removeEventListener("keydown", handleEscape)
   }, [isSidebarOpen, onCloseSidebar])
 
-  const overlayTransition = reduceMotion
+  const overlayTransition: Transition = reduceMotion
     ? { duration: 0 }
     : { duration: 0.2, ease: "easeOut" }
 
-  const drawerTransition = reduceMotion
+  const drawerTransition: Transition = reduceMotion
     ? { duration: 0 }
-    : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+    : { duration: 0.3, ease: emphasizedEase }
 
-  const contentVariants = {
+  const contentVariants: Variants = {
     hidden: { opacity: 0, y: reduceMotion ? 0 : 10 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: reduceMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] },
+      transition: { duration: reduceMotion ? 0 : 0.3, ease: emphasizedEase },
     },
     exit: {
       opacity: 0,

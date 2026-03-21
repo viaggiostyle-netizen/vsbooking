@@ -1,6 +1,5 @@
 "use client"
 
-import type { ComponentType } from "react"
 import Link from "next/link"
 import {
   Activity,
@@ -11,6 +10,7 @@ import {
   ShieldMinus,
   Settings2,
   Trash2,
+  type LucideIcon,
 } from "lucide-react"
 import type { AdminLogAction, AdminLogRecord } from "@/lib/admin-logs"
 
@@ -26,7 +26,7 @@ type ActivityFeedProps = {
 
 type ActivityMeta = {
   label: string
-  icon: ComponentType<{ size?: number; className?: string }>
+  icon: LucideIcon
   toneClassName: string
 }
 

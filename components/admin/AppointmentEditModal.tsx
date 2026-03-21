@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, ChevronLeft, Check, AlertCircle, ChevronDown, UserX, EyeOff, Pencil, Trash2 } from "lucide-react"
+import { Calendar, ChevronLeft, Check, AlertCircle, UserX, EyeOff, Pencil, Trash2 } from "lucide-react"
 import CalendarBase from "@/components/booking/Calendar"
 import ServicePicker from "@/components/admin/ServicePicker"
 import Button from "@/components/ui/Button"
@@ -58,9 +58,6 @@ export default function AppointmentEditModal({
   const [view, setView] = useState<ModalView>("menu")
 
   if (!appointment) return null
-
-  const selectedService =
-    services.find((service) => service.id === selectedServiceId) ?? null
 
   const execute = async (callback: () => Promise<void>) => {
     await callback()

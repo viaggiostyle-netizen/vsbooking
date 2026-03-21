@@ -29,7 +29,7 @@ export async function enableAdminPushNotifications(options: { askPermission: boo
     return null
 }
 
-export async function disableAdminPushNotifications(token: string) {
+export async function disableAdminPushNotifications() {
     // Aquí opcionalmente podrías llamar a una API de unsubscribe si decides implementarla
     localStorage.removeItem(PUSH_TOKEN_STORAGE_KEY)
 }

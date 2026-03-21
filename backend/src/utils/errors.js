@@ -17,12 +17,12 @@ export function notFoundHandler(_req, res) {
 }
 
 export function errorHandler(error, _req, res, _next) {
+  void _next;
   const statusCode = error.statusCode ?? 500;
   const code = error.code ?? "INTERNAL_ERROR";
   const message = error.message ?? "Error interno";
 
   if (statusCode >= 500) {
-    // eslint-disable-next-line no-console
     console.error(error);
   }
 

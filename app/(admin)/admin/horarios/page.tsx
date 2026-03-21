@@ -1,36 +1,22 @@
 ﻿"use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Ban, Calendar, Clock3, Lock, Plus, Trash2, X, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react"
+import { Ban, Calendar, Lock, Plus, Trash2, X, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react"
 import { useDateBlocks } from "@/context/DateBlockContext"
 import { useTimeBlocks } from "@/context/TimeBlockContext"
-import { useAppointments } from "@/context/AppointmentContext"
 import { useSettings } from "@/context/SettingsContext"
-import { generateTimeSlots, getAvailableSlots, timeToMinutes } from "@/lib/scheduleUtils"
-import { readOrganizationData, DayKey } from "@/lib/admin-organization"
+import { generateTimeSlots } from "@/lib/scheduleUtils"
+import { readOrganizationData } from "@/lib/admin-organization"
 import DatePicker from "@/components/booking/DatePicker"
 import RangeDatePicker from "@/components/admin/RangeDatePicker"
 import type { WorkBlock } from "@/types/WorkBlock"
 
-const DAY_OPTIONS = [
-  { value: 1, label: "Lun" },
-  { value: 2, label: "Mar" },
-  { value: 3, label: "Mié" },
-  { value: 4, label: "Jue" },
-  { value: 5, label: "Vie" },
-  { value: 6, label: "Sáb" },
-  { value: 0, label: "Dom" },
-]
-const MIN_DATE = new Date(2026, 1, 20)
-const MAX_DATE = new Date(2030, 11, 31)
-
 export default function HorariosPage() {
   const { settings, updateSettings } = useSettings()
-  const [organizationData, setOrganizationData] = useState(() => readOrganizationData())
+  const [organizationData] = useState(() => readOrganizationData())
   const { dateBlocks, createDateBlock, deleteDateBlock } = useDateBlocks()
   const { timeBlocks, createTimeBlock, deleteTimeBlock } = useTimeBlocks()
-  const { appointments } = useAppointments()
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
@@ -50,21 +36,8 @@ export default function HorariosPage() {
   )
 
   const generatedSlots = useMemo(
-    () => generateTimeSlots(slotDate, workBlocks, settings),
-    [slotDate, workBlocks, settings]
-  )
-
-  const availableSlots = useMemo(
-    () =>
-      getAvailableSlots({
-        date: slotDate,
-        workBlocks,
-        settings,
-        dateBlocks,
-        timeBlocks,
-        appointments,
-      }),
-    [slotDate, workBlocks, settings, dateBlocks, timeBlocks, appointments]
+    () => generateTimeSlots(slotDate, workBlocks),
+    [slotDate, workBlocks]
   )
 
   const blockDateRange = () => {
@@ -461,13 +434,6 @@ function formatDate(value: string) {
   if (!year || !month || !day) return value
   return `${day}/${month}/${year}`
 }
-
-
-
-function toDateKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-}
-
 function mapSchedulesToWorkBlocks(
   schedules: ReturnType<typeof readOrganizationData>["schedules"]
 ): WorkBlock[] {

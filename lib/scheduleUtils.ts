@@ -14,7 +14,7 @@ type AvailableArgs = {
   now?: Date
 }
 
-export function generateTimeSlots(date: string, workBlocks: WorkBlock[], settings: Settings): string[] {
+export function generateTimeSlots(date: string, workBlocks: WorkBlock[]): string[] {
   const day = dayOfWeekFromDateKey(date)
   const blocks = workBlocks
     .filter((block) => block.enabled && block.daysOfWeek.includes(day))
@@ -62,7 +62,7 @@ export function getAvailableSlots({
     return []
   }
 
-  const generated = generateTimeSlots(date, workBlocks, settings)
+  const generated = generateTimeSlots(date, workBlocks)
 
   return generated.filter((slot) => {
     if (isTimeBlocked(date, slot, timeBlocks)) return false
@@ -101,12 +101,6 @@ export function timeToMinutes(time: string): number {
   const [hour, minute] = time.split(":").map(Number)
   if (!Number.isFinite(hour) || !Number.isFinite(minute)) return 0
   return hour * 60 + minute
-}
-
-export function minutesToTime(value: number): string {
-  const hours = Math.floor(value / 60)
-  const minutes = value % 60
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
 }
 
 function dayOfWeekFromDateKey(date: string): number {
