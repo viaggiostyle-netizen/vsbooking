@@ -112,10 +112,10 @@ function AuthContent() {
           Volver al inicio
         </Link>
 
-        <div className="mb-7 grid h-[78px] w-[78px] place-items-center rounded-[24px] border border-border/50 bg-[color-mix(in_srgb,var(--background)_72%,transparent)] shadow-[0_18px_36px_rgba(15,23,42,0.12)]">
+        <div className="mb-7 grid h-[78px] w-[78px] place-items-center rounded-[24px] border border-border/50 bg-[color-mix(in_srgb,var(--background)_72%,transparent)] dark:bg-[#272727] shadow-[0_18px_36px_rgba(15,23,42,0.12)]">
           <Logo
             size={46}
-            className={`h-[46px] w-[46px] ${isDark ? "mix-blend-lighten brightness-90 contrast-125" : ""}`}
+            className="h-[46px] w-[46px]"
           />
         </div>
 
