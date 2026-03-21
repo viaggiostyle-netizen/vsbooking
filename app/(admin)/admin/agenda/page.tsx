@@ -33,10 +33,10 @@ const MIN_DATE = new Date(2026, 1, 20)
 const MAX_DATE = new Date(2030, 11, 31)
 
 const STATUS_LEGEND = [
-  { label: "Completado", icon: <Check size={14} className="text-emerald-500" /> },
-  { label: "Aviso", icon: <UserX size={14} className="text-orange-500" /> },
-  { label: "No-show", icon: <EyeOff size={14} className="text-rose-400" /> },
-  { label: "Cancelado", icon: <XCircle size={14} className="text-red-500" /> },
+  { label: "Completado", icon: <Check size={14} className="text-[#05AA72]" /> },
+  { label: "No vino, pero aviso", icon: <UserX size={14} className="text-[#FF6900]" /> },
+  { label: "No show (Ausente)", icon: <EyeOff size={14} className="text-[#FF637E]" /> },
+  { label: "Cancelado por el cliente", icon: <XCircle size={14} className="text-[#FB2C36]" /> },
 ]
 
 export default function AgendaPage() {
@@ -573,7 +573,7 @@ export default function AgendaPage() {
                               key={item.id}
                               type="button"
                               onClick={() => openAppointmentModal(item)}
-                              className={`w-full rounded-md border p-1 text-left transition-all duration-300 ease-in-out hover:bg-[var(--hover)] ${style.containerClass}`}
+                              className={`w-full rounded-md border p-1 text-left transition-all duration-300 ease-in-out hover:scale-[1.01] active:scale-[0.99] ${style.containerClass}`}
                             >
                               <p
                                 className={`truncate text-xs font-semibold ${style.textClass}`}
@@ -850,38 +850,43 @@ function getAppointmentStyle(status: Appointment["status"]) {
 
   if (canonical === "completed") {
     return {
-      containerClass: "border-surface border-l-4 border-l-emerald-500 bg-card",
-      textClass: "text-foreground",
-      secondaryTextClass: "text-muted",
+      containerClass:
+        "border-[#05AA72] bg-[#05AA72] shadow-[0_8px_18px_rgba(5,170,114,0.24)] hover:bg-[#049965]",
+      textClass: "text-white",
+      secondaryTextClass: "text-white/85",
     }
   }
 
   if (canonical === "no_show_with_notice") {
     return {
-      containerClass: "border-surface border-l-4 border-l-orange-500 bg-card",
-      textClass: "text-foreground",
-      secondaryTextClass: "text-muted",
+      containerClass:
+        "border-[#FF6900] bg-[#FF6900] shadow-[0_8px_18px_rgba(255,105,0,0.24)] hover:bg-[#e86000]",
+      textClass: "text-white",
+      secondaryTextClass: "text-white/85",
     }
   }
 
   if (canonical === "no_show") {
     return {
-      containerClass: "border-surface border-l-4 border-l-rose-500 bg-card",
-      textClass: "text-foreground",
-      secondaryTextClass: "text-muted",
+      containerClass:
+        "border-[#FF637E] bg-[#FF637E] shadow-[0_8px_18px_rgba(255,99,126,0.24)] hover:bg-[#f55571]",
+      textClass: "text-white",
+      secondaryTextClass: "text-white/85",
     }
   }
 
   if (canonical === "cancelled") {
     return {
-      containerClass: "border-surface border-l-4 border-l-[#52525b] bg-card",
-      textClass: "line-through opacity-50",
-      secondaryTextClass: "line-through text-muted/70",
+      containerClass:
+        "border-[#FB2C36] bg-[#FB2C36] shadow-[0_8px_18px_rgba(251,44,54,0.24)] hover:bg-[#eb1d29]",
+      textClass: "text-white",
+      secondaryTextClass: "text-white/85",
     }
   }
 
   return {
-    containerClass: "border-surface border-l-4 border-l-[#71717a] bg-card",
+    containerClass:
+      "border-surface border-l-4 border-l-[#71717a] bg-card hover:bg-[var(--hover)]",
     textClass: "text-foreground",
     secondaryTextClass: "text-muted",
   }
