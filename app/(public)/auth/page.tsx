@@ -112,7 +112,7 @@ function AuthContent() {
           Volver al inicio
         </Link>
 
-        <div className={`mb-7 grid h-[78px] w-[78px] place-items-center rounded-[24px] border border-border/50 shadow-[0_18px_36px_rgba(15,23,42,0.12)] ${isDark ? "bg-[#1c1c1c]" : "bg-[color-mix(in_srgb,var(--background)_72%,transparent)]"}`}>
+        <div className="mb-7 grid h-[78px] w-[78px] place-items-center rounded-[24px] border border-border/50 bg-[color-mix(in_srgb,var(--background)_72%,transparent)] dark:!bg-[#1c1c1c] shadow-[0_18px_36px_rgba(15,23,42,0.12)]">
           <Logo
             size={46}
             className="h-[46px] w-[46px]"
