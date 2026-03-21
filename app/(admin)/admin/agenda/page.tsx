@@ -33,10 +33,26 @@ const MIN_DATE = new Date(2026, 1, 20)
 const MAX_DATE = new Date(2030, 11, 31)
 
 const STATUS_LEGEND = [
-  { label: "Completado", icon: <Check size={14} className="text-[#05AA72]" /> },
-  { label: "No vino, pero aviso", icon: <UserX size={14} className="text-[#FF6900]" /> },
-  { label: "No show (Ausente)", icon: <EyeOff size={14} className="text-[#FF637E]" /> },
-  { label: "Cancelado por el cliente", icon: <XCircle size={14} className="text-[#FB2C36]" /> },
+  {
+    label: "Completado",
+    icon: <Check size={14} className="text-[#05AA72]" />,
+    chipClass: "bg-[#05AA72]/10 text-[#05AA72] ring-[#05AA72]/20",
+  },
+  {
+    label: "No vino, pero aviso",
+    icon: <UserX size={14} className="text-[#FF6900]" />,
+    chipClass: "bg-[#FF6900]/10 text-[#FF6900] ring-[#FF6900]/20",
+  },
+  {
+    label: "No show (Ausente)",
+    icon: <EyeOff size={14} className="text-[#FF637E]" />,
+    chipClass: "bg-[#FF637E]/10 text-[#FF637E] ring-[#FF637E]/20",
+  },
+  {
+    label: "Cancelado por el cliente",
+    icon: <XCircle size={14} className="text-[#FB2C36]" />,
+    chipClass: "bg-[#FB2C36]/10 text-[#FB2C36] ring-[#FB2C36]/20",
+  },
 ]
 
 export default function AgendaPage() {
@@ -480,52 +496,74 @@ export default function AgendaPage() {
         <p className="mt-1 text-sm text-muted">Administra turnos, estados y cambios de fecha.</p>
       </header>
 
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-foreground">
-          <Calendar size={16} />
-          <h2 className="text-lg font-semibold">Agenda Semanal</h2>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setSelectedDate(addDays(selectedDate, -7))}
-            className="grid h-9 w-9 place-items-center rounded-full border border-surface hover:bg-card"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            onClick={() => setSelectedDate(minSelectableDate)}
-            className="rounded-full border border-surface px-3 py-2 text-sm font-semibold hover:bg-card"
-          >
-            Hoy
-          </button>
-          <button
-            onClick={() => setSelectedDate(addDays(selectedDate, 7))}
-            className="grid h-9 w-9 place-items-center rounded-full border border-surface hover:bg-card"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-
-      <p className="mb-4 text-center text-sm text-muted">{displayedRange}</p>
-
-      <div className="mb-4 flex flex-wrap items-center gap-6 text-[13px] font-medium text-muted/80">
-        {STATUS_LEGEND.map((status) => (
-          <div key={status.label} className="flex items-center gap-2">
-            {status.icon}
-            <span>{status.label}</span>
+      <div className="mb-6 overflow-hidden rounded-[32px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-4 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[var(--accent)] text-white shadow-[0_18px_32px_rgba(15,23,42,0.18)]">
+              <Calendar size={20} />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                Vista semanal
+              </p>
+              <h2 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-foreground">
+                Agenda estilo Apple Calendar
+              </h2>
+              <p className="mt-1 text-sm text-muted">{displayedRange}</p>
+            </div>
           </div>
-        ))}
+
+          <div className="flex flex-col gap-3 xl:items-end">
+            <div className="inline-flex items-center gap-1 rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_72%,transparent)] p-1 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+              <button
+                onClick={() => setSelectedDate(addDays(selectedDate, -7))}
+                className="grid h-10 w-10 place-items-center rounded-full text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
+                aria-label="Semana anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setSelectedDate(minSelectableDate)}
+                className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(15,23,42,0.18)] transition-all duration-200 hover:brightness-110"
+              >
+                Hoy
+              </button>
+              <button
+                onClick={() => setSelectedDate(addDays(selectedDate, 7))}
+                className="grid h-10 w-10 place-items-center rounded-full text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
+                aria-label="Semana siguiente"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 xl:justify-end">
+              {STATUS_LEGEND.map((status) => (
+                <div
+                  key={status.label}
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] font-semibold ring-1 ring-inset ${status.chipClass}`}
+                >
+                  {status.icon}
+                  <span>{status.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-surface bg-surface">
+      <div className="overflow-hidden rounded-[32px] border border-surface bg-[color-mix(in_srgb,var(--card)_92%,transparent)] shadow-[0_28px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl">
         <div className="overflow-x-auto">
-          <table className="min-w-full table-fixed border-collapse">
+          <table className="min-w-[980px] w-full table-fixed border-separate border-spacing-0">
             <thead>
               <tr>
-                <th className="w-[78px] border-b border-r border-surface px-2 py-2 text-center text-sm font-semibold text-muted">
-                  Hora
+                <th className="sticky left-0 z-20 w-[92px] border-b border-r border-surface bg-[color-mix(in_srgb,var(--card)_96%,transparent)] px-3 py-4 text-left align-top backdrop-blur-xl">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                      Hora
+                    </span>
+                    <span className="text-[13px] font-semibold text-foreground">Semana</span>
+                  </div>
                 </th>
                 {visibleWeekDays.map((day) => {
                   const isCurrentDay = isSameDay(day, selectedDate)
@@ -533,13 +571,33 @@ export default function AgendaPage() {
                   return (
                     <th
                       key={day.toISOString()}
-                      className={`w-[74px] border-b border-r border-surface px-1 py-2 text-center ${isCurrentDay ? "bg-[var(--accent)]" : ""
-                        }`}
+                      className="border-b border-r border-surface bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-2 py-3 text-center backdrop-blur-xl"
                     >
-                      <p className={`text-[10px] font-medium ${isCurrentDay ? "text-white/85" : "text-muted"}`}>{formatWeekDay(day)}</p>
-                      <p className={`text-base font-semibold leading-none ${isCurrentDay ? "text-white" : "text-foreground"}`}>
-                        {day.getDate()}
-                      </p>
+                      <div
+                        className={`mx-auto flex min-h-[88px] w-full max-w-[124px] flex-col items-center justify-center rounded-[24px] border px-3 py-3 text-center transition-all duration-300 ${isCurrentDay
+                            ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_18px_34px_rgba(15,23,42,0.18)]"
+                            : "border-surface bg-[color-mix(in_srgb,var(--background)_74%,transparent)] text-foreground"
+                          }`}
+                      >
+                        <p
+                          className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isCurrentDay ? "text-white/75" : "text-muted"
+                            }`}
+                        >
+                          {formatWeekDay(day)}
+                        </p>
+                        <p className="mt-1 text-[30px] font-semibold leading-none">{day.getDate()}</p>
+                        <p
+                          className={`mt-1 text-[11px] font-medium capitalize ${isCurrentDay ? "text-white/82" : "text-muted"
+                            }`}
+                        >
+                          {formatShortMonth(day)}
+                        </p>
+                        {isCurrentDay ? (
+                          <span className="mt-2 rounded-full bg-white/16 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+                            Hoy
+                          </span>
+                        ) : null}
+                      </div>
                     </th>
                   )
                 })}
@@ -549,8 +607,12 @@ export default function AgendaPage() {
             <tbody>
               {BASE_TIME_SLOTS.map((slot) => (
                 <tr key={slot}>
-                  <td className="h-9 border-r border-t border-surface px-2 text-center text-xs text-muted">
-                    {slot}
+                  <td className="sticky left-0 z-10 h-[78px] border-r border-t border-surface bg-[color-mix(in_srgb,var(--card)_96%,transparent)] px-3 align-top backdrop-blur-xl">
+                    <div className="flex h-full items-start justify-end pt-2.5">
+                      <span className="rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_72%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-muted shadow-[0_6px_14px_rgba(15,23,42,0.08)]">
+                        {slot}
+                      </span>
+                    </div>
                   </td>
 
                   {visibleWeekDays.map((day) => {
@@ -563,32 +625,31 @@ export default function AgendaPage() {
                     return (
                       <td
                         key={`${dateKey}-${slot}`}
-                        className={`border-r border-t border-surface px-1 py-1 align-top ${isCurrentDay ? "bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]" : ""
+                        className={`h-[78px] min-w-[148px] border-r border-t border-surface px-2 py-2 align-top ${isCurrentDay
+                            ? "bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent)_8%,transparent),transparent)]"
+                            : "bg-[color-mix(in_srgb,var(--card)_84%,transparent)]"
                           }`}
                       >
-                        {dayTurns.map((item) => {
-                          const style = getAppointmentStyle(item.status)
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => openAppointmentModal(item)}
-                              className={`w-full rounded-md border p-1 text-left transition-all duration-300 ease-in-out hover:scale-[1.01] active:scale-[0.99] ${style.containerClass}`}
-                            >
-                              <p
-                                className={`truncate text-xs font-semibold ${style.textClass}`}
+                        <div className="flex h-full flex-col gap-1.5">
+                          {dayTurns.map((item) => {
+                            const style = getAppointmentStyle(item.status)
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => openAppointmentModal(item)}
+                                className={`w-full rounded-[18px] border px-2.5 py-2 text-left shadow-[0_10px_22px_rgba(15,23,42,0.10)] backdrop-blur-[10px] transition-all duration-300 ease-out hover:-translate-y-[1px] active:scale-[0.99] ${style.containerClass}`}
                               >
-                                {item.clientName}
-                              </p>
-                              <p
-                                className={`truncate text-[10px] ${style.secondaryTextClass
-                                  }`}
-                              >
-                                {item.service}
-                              </p>
-                            </button>
-                          )
-                        })}
+                                <p className={`truncate text-[11px] font-semibold ${style.textClass}`}>
+                                  {item.clientName}
+                                </p>
+                                <p className={`mt-0.5 truncate text-[10px] font-medium ${style.secondaryTextClass}`}>
+                                  {item.service}
+                                </p>
+                              </button>
+                            )
+                          })}
+                        </div>
                       </td>
                     )
                   })}
@@ -712,34 +773,42 @@ function MonthPicker({
   const days = Array.from({ length: 42 }, (_, index) => addDays(start, index))
 
   return (
-    <div className="z-10 w-[280px] rounded-xl border border-surface bg-background p-3 shadow-2xl">
-      <div className="mb-2 flex items-center justify-between">
-        <button
-          onClick={() =>
-            onMonthChange(new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1))
-          }
-          className="grid h-7 w-7 place-items-center rounded-full border border-surface text-muted hover:bg-card"
-        >
-          <ChevronLeft size={14} />
-        </button>
-        <p className="text-sm font-semibold capitalize">{monthLabel}</p>
-        <button
-          onClick={() =>
-            onMonthChange(new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1))
-          }
-          className="grid h-7 w-7 place-items-center rounded-full border border-surface text-muted hover:bg-card"
-        >
-          <ChevronRight size={14} />
-        </button>
+    <div className="z-10 w-[320px] rounded-[30px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-4 shadow-[0_28px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            Seleccionar fecha
+          </p>
+          <p className="mt-1 text-base font-semibold capitalize text-foreground">{monthLabel}</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() =>
+              onMonthChange(new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1))
+            }
+            className="grid h-9 w-9 place-items-center rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_74%,transparent)] text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <button
+            onClick={() =>
+              onMonthChange(new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1))
+            }
+            className="grid h-9 w-9 place-items-center rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_74%,transparent)] text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
       </div>
 
-      <div className="mb-1 grid grid-cols-7 text-center text-[11px] text-muted">
+      <div className="mb-2 grid grid-cols-7 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-muted/70">
         {"lu ma mi ju vi sa do".split(" ").map((name) => (
           <span key={name}>{name}</span>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-y-1">
+      <div className="grid grid-cols-7 gap-y-2">
         {days.map((day) => {
           const inCurrentMonth = day.getMonth() === monthCursor.getMonth()
           const selectable = isSelectableDate(day, minSelectableDate)
@@ -750,13 +819,13 @@ function MonthPicker({
               key={day.toISOString()}
               onClick={() => selectable && onSelectDate(day)}
               disabled={!selectable}
-              className={`mx-auto h-7 w-7 rounded-full text-xs transition ${selected
-                ? "bg-[var(--accent)] text-white"
-                : inCurrentMonth
-                  ? selectable
-                    ? "text-foreground hover:bg-card"
-                    : "text-muted"
-                  : "text-muted"
+              className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-semibold transition-all duration-200 ${selected
+                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]"
+                  : inCurrentMonth
+                    ? selectable
+                      ? "bg-[color-mix(in_srgb,var(--card)_88%,transparent)] text-foreground hover:-translate-y-[1px] hover:bg-[color-mix(in_srgb,var(--background)_84%,transparent)]"
+                      : "text-muted/40"
+                    : "text-muted/30"
                 }`}
             >
               {day.getDate()}
@@ -781,6 +850,12 @@ function formatWeekRange(start: Date, end: Date) {
 function formatWeekDay(date: Date) {
   const day = new Intl.DateTimeFormat("es-AR", { weekday: "short" }).format(date)
   return day.replace(".", "").toUpperCase()
+}
+
+function formatShortMonth(date: Date) {
+  return new Intl.DateTimeFormat("es-AR", { month: "short" })
+    .format(date)
+    .replace(".", "")
 }
 
 function getTodayInArgentina() {
@@ -851,7 +926,7 @@ function getAppointmentStyle(status: Appointment["status"]) {
   if (canonical === "completed") {
     return {
       containerClass:
-        "border-[#05AA72] bg-[#05AA72] shadow-[0_8px_18px_rgba(5,170,114,0.24)] hover:bg-[#049965]",
+        "border-[#05AA72] bg-[#05AA72] shadow-[0_12px_24px_rgba(5,170,114,0.24)] hover:bg-[#049965] hover:shadow-[0_16px_30px_rgba(5,170,114,0.28)]",
       textClass: "text-white",
       secondaryTextClass: "text-white/85",
     }
@@ -860,7 +935,7 @@ function getAppointmentStyle(status: Appointment["status"]) {
   if (canonical === "no_show_with_notice") {
     return {
       containerClass:
-        "border-[#FF6900] bg-[#FF6900] shadow-[0_8px_18px_rgba(255,105,0,0.24)] hover:bg-[#e86000]",
+        "border-[#FF6900] bg-[#FF6900] shadow-[0_12px_24px_rgba(255,105,0,0.24)] hover:bg-[#e86000] hover:shadow-[0_16px_30px_rgba(255,105,0,0.28)]",
       textClass: "text-white",
       secondaryTextClass: "text-white/85",
     }
@@ -869,7 +944,7 @@ function getAppointmentStyle(status: Appointment["status"]) {
   if (canonical === "no_show") {
     return {
       containerClass:
-        "border-[#FF637E] bg-[#FF637E] shadow-[0_8px_18px_rgba(255,99,126,0.24)] hover:bg-[#f55571]",
+        "border-[#FF637E] bg-[#FF637E] shadow-[0_12px_24px_rgba(255,99,126,0.24)] hover:bg-[#f55571] hover:shadow-[0_16px_30px_rgba(255,99,126,0.28)]",
       textClass: "text-white",
       secondaryTextClass: "text-white/85",
     }
@@ -878,7 +953,7 @@ function getAppointmentStyle(status: Appointment["status"]) {
   if (canonical === "cancelled") {
     return {
       containerClass:
-        "border-[#FB2C36] bg-[#FB2C36] shadow-[0_8px_18px_rgba(251,44,54,0.24)] hover:bg-[#eb1d29]",
+        "border-[#FB2C36] bg-[#FB2C36] shadow-[0_12px_24px_rgba(251,44,54,0.24)] hover:bg-[#eb1d29] hover:shadow-[0_16px_30px_rgba(251,44,54,0.28)]",
       textClass: "text-white",
       secondaryTextClass: "text-white/85",
     }
@@ -886,7 +961,7 @@ function getAppointmentStyle(status: Appointment["status"]) {
 
   return {
     containerClass:
-      "border-surface border-l-4 border-l-[#71717a] bg-card hover:bg-[var(--hover)]",
+      "border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_74%,transparent),color-mix(in_srgb,var(--card)_96%,transparent))] hover:bg-[color-mix(in_srgb,var(--background)_84%,transparent)] hover:shadow-[0_16px_30px_rgba(15,23,42,0.12)]",
     textClass: "text-foreground",
     secondaryTextClass: "text-muted",
   }
