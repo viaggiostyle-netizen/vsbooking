@@ -17,6 +17,7 @@ import {
   Activity,
   Bell,
   CalendarDays,
+  Check,
   ChevronDown,
   CircleSlash2,
   Clock3,
@@ -391,6 +392,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               title={pushButtonLabel}
             >
               <span className="admin-push-toggle__track" aria-hidden="true">
+                <span className="admin-push-toggle__status">
+                  <Check size={18} strokeWidth={3.25} className="admin-push-toggle__check" />
+                </span>
                 <span className="admin-push-toggle__thumb">
                   <Bell size={16} strokeWidth={2.25} className="admin-push-toggle__bell" />
                 </span>
