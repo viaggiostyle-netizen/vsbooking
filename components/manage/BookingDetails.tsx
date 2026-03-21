@@ -2,7 +2,7 @@
 
 import { Calendar, Clock3, Scissors, UserRound, Wallet2 } from "lucide-react"
 import Button from "@/components/ui/Button"
-import { formatLongDate } from "@/lib/date"
+import { formatShortDateWithDay } from "@/lib/date"
 import { formatMoney } from "@/lib/utils"
 import type { Appointment } from "@/types/Appointment"
 
@@ -29,7 +29,7 @@ export default function BookingDetails({ appointment, onCancel, onModify }: Book
           <div className="grid gap-6 sm:grid-cols-2">
             <InfoItem icon={<UserRound size={18} />} label="Cliente" value={appointment.clientName} />
             <InfoItem icon={<Scissors size={18} />} label="Servicio" value={appointment.service} />
-            <InfoItem icon={<Calendar size={18} />} label="Fecha" value={capitalize(formatLongDate(appointment.date))} />
+            <InfoItem icon={<Calendar size={18} />} label="Fecha" value={formatShortDateWithDay(appointment.date)} />
             <InfoItem icon={<Clock3 size={18} />} label="Hora" value={appointment.time} />
           </div>
 
@@ -78,7 +78,7 @@ function InfoItem({
   value: string
 }) {
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-4">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-foreground/5 text-muted shadow-sm transition-colors hover:bg-foreground/10">
         {icon}
       </div>

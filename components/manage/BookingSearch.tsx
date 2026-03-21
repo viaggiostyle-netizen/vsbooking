@@ -23,7 +23,7 @@ export default function BookingSearch({ email, onEmailChange, onSearch }: Bookin
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
             placeholder="ejemplo@correo.com"
-            className="h-[54px] w-full rounded-2xl border-border/50 bg-background pl-12 pr-4 text-[16px] text-foreground placeholder:text-muted/40 transition-all focus:border-foreground/20 focus:ring-4 focus:ring-foreground/[0.03]"
+            className="h-[54px] w-full rounded-2xl border-border/50 bg-background pl-14 pr-4 text-[16px] text-foreground placeholder:text-muted/40 transition-all focus:border-foreground/20 focus:ring-4 focus:ring-foreground/[0.03]"
           />
         </div>
       </div>
@@ -31,7 +31,7 @@ export default function BookingSearch({ email, onEmailChange, onSearch }: Bookin
       <Button 
         onClick={onSearch} 
         disabled={!email || !email.includes("@")}
-        className="h-[54px] w-full items-center gap-2 rounded-2xl bg-foreground text-[16px] font-bold text-background shadow-lg shadow-foreground/10 hover:shadow-foreground/20 active:scale-[0.98]"
+        className="h-[54px] w-full items-center gap-4 rounded-2xl bg-foreground text-[16px] font-bold text-background shadow-lg shadow-foreground/10 hover:shadow-foreground/20 active:scale-[0.98]"
       >
         <Search size={18} />
         Buscar mi reserva

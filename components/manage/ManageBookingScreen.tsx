@@ -11,7 +11,7 @@ import Modal from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 import { getAvailableTimeSlots } from "@/lib/availability"
 import { evaluateCancellationRule } from "@/lib/rulesUtils"
-import { getTodayDateKeyArgentina, isPastDate, isSunday } from "@/lib/date"
+import { formatShortDateWithDay, getTodayDateKeyArgentina, isPastDate, isSunday } from "@/lib/date"
 import { useAppointmentsStore } from "@/stores/useAppointmentsStore"
 import { useOrganizationStore } from "@/stores/useOrganizationStore"
 
@@ -154,7 +154,7 @@ export default function ManageBookingScreen() {
             <div className="flex items-center gap-4 text-muted/80">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/[0.03] border border-border/50">
                 <CalendarDays size={14} />
-                <span className="text-[13px] font-bold">{selected.date}</span>
+                <span className="text-[13px] font-bold">{formatShortDateWithDay(selected.date)}</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/[0.03] border border-border/50">
                 <Clock size={14} />

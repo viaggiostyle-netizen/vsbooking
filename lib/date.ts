@@ -32,6 +32,14 @@ export function formatLongDate(dateKey: string) {
   }).format(dateKeyToDate(dateKey))
 }
 
+export function formatShortDateWithDay(dateKey: string) {
+  const date = dateKeyToDate(dateKey)
+  const weekday = new Intl.DateTimeFormat("es-AR", { weekday: "long" }).format(date)
+  const day = String(date.getDate()).padStart(2, "0")
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${day}/${month}`
+}
+
 export function formatMonthYear(date: Date) {
   return new Intl.DateTimeFormat("es-AR", {
     month: "long",
