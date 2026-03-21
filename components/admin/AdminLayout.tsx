@@ -52,6 +52,38 @@ export default function AdminLayout({
     ? { duration: 0 }
     : { duration: 0.3, ease: emphasizedEase }
 
+  const surfaceTransition: Transition = reduceMotion
+    ? { duration: 0 }
+    : { duration: 0.42, ease: emphasizedEase }
+
+  const sidebarEntranceVariants: Variants = {
+    hidden: {
+      opacity: 0,
+      x: reduceMotion ? 0 : -18,
+    },
+    show: {
+      opacity: 1,
+      x: 0,
+      transition: surfaceTransition,
+    },
+  }
+
+  const adminSurfaceVariants: Variants = {
+    hidden: {
+      opacity: 0,
+      y: reduceMotion ? 0 : 20,
+      scale: reduceMotion ? 1 : 0.992,
+      filter: reduceMotion ? "none" : "blur(10px)",
+    },
+    show: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: surfaceTransition,
+    },
+  }
+
   const contentVariants: Variants = {
     hidden: { opacity: 0, y: reduceMotion ? 0 : 10 },
     show: {
@@ -68,7 +100,14 @@ export default function AdminLayout({
 
   return (
     <div className="admin-shell flex min-h-screen bg-background text-foreground">
-      <div className="hidden lg:flex lg:flex-col">{sidebar}</div>
+      <motion.div
+        className="hidden lg:flex lg:flex-col"
+        initial="hidden"
+        animate="show"
+        variants={sidebarEntranceVariants}
+      >
+        {sidebar}
+      </motion.div>
 
       <AnimatePresence>
         {isSidebarOpen && (
@@ -97,7 +136,12 @@ export default function AdminLayout({
         )}
       </AnimatePresence>
 
-      <div className="admin-content min-w-0 flex-1 overflow-x-hidden bg-background">
+      <motion.div
+        className="admin-content min-w-0 flex-1 overflow-x-hidden bg-background"
+        initial="hidden"
+        animate="show"
+        variants={adminSurfaceVariants}
+      >
         <AdminHeader>{header}</AdminHeader>
 
         <main className="min-w-0">
@@ -113,7 +157,7 @@ export default function AdminLayout({
             </motion.div>
           </AnimatePresence>
         </main>
-      </div>
+      </motion.div>
     </div>
   )
 }

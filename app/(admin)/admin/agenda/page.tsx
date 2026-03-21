@@ -490,50 +490,50 @@ export default function AgendaPage() {
 
   return (
     <section className="mx-auto w-full max-w-[1200px] px-6 py-6">
-      <header className="mb-6">
+      <header className="mb-5">
         <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-muted">Agenda</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">Calendario semanal</h1>
-        <p className="mt-1 text-sm text-muted">Administra turnos, estados y cambios de fecha.</p>
+        <h1 className="mt-1 text-[28px] font-bold tracking-tight">Agenda</h1>
+        <p className="mt-1 text-[13px] text-muted">Administra turnos, estados y cambios de fecha.</p>
       </header>
 
-      <div className="mb-6 overflow-hidden rounded-[32px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-4 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur-xl">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[var(--accent)] text-white shadow-[0_18px_32px_rgba(15,23,42,0.18)]">
-              <Calendar size={20} />
+      <div className="mb-5 overflow-hidden rounded-[26px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-3.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] backdrop-blur-xl">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[16px] bg-[var(--accent)] text-white shadow-[0_12px_24px_rgba(15,23,42,0.16)]">
+              <Calendar size={18} />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
                 Vista semanal
               </p>
-              <h2 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-foreground">
-                Agenda estilo Apple Calendar
+              <h2 className="mt-1 text-[20px] font-semibold tracking-[-0.02em] text-foreground">
+                Agenda
               </h2>
-              <p className="mt-1 text-sm text-muted">{displayedRange}</p>
+              <p className="mt-1 text-[13px] text-muted">{displayedRange}</p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 xl:items-end">
-            <div className="inline-flex items-center gap-1 rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_72%,transparent)] p-1 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+          <div className="flex flex-col gap-2.5 xl:items-end">
+            <div className="inline-flex items-center gap-1 rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_72%,transparent)] p-1 shadow-[0_8px_18px_rgba(15,23,42,0.07)] backdrop-blur-xl">
               <button
                 onClick={() => setSelectedDate(addDays(selectedDate, -7))}
-                className="grid h-10 w-10 place-items-center rounded-full text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
+                className="grid h-9 w-9 place-items-center rounded-full text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
                 aria-label="Semana anterior"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={15} />
               </button>
               <button
                 onClick={() => setSelectedDate(minSelectableDate)}
-                className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(15,23,42,0.18)] transition-all duration-200 hover:brightness-110"
+                className="rounded-full bg-[var(--accent)] px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] transition-all duration-200 hover:brightness-110"
               >
                 Hoy
               </button>
               <button
                 onClick={() => setSelectedDate(addDays(selectedDate, 7))}
-                className="grid h-10 w-10 place-items-center rounded-full text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
+                className="grid h-9 w-9 place-items-center rounded-full text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
                 aria-label="Semana siguiente"
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={15} />
               </button>
             </div>
 
@@ -541,7 +541,7 @@ export default function AgendaPage() {
               {STATUS_LEGEND.map((status) => (
                 <div
                   key={status.label}
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] font-semibold ring-1 ring-inset ${status.chipClass}`}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset ${status.chipClass}`}
                 >
                   {status.icon}
                   <span>{status.label}</span>
@@ -552,17 +552,17 @@ export default function AgendaPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[32px] border border-surface bg-[color-mix(in_srgb,var(--card)_92%,transparent)] shadow-[0_28px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+      <div className="overflow-hidden rounded-[26px] border border-surface bg-[color-mix(in_srgb,var(--card)_92%,transparent)] shadow-[0_20px_52px_rgba(15,23,42,0.10)] backdrop-blur-xl">
         <div className="overflow-x-auto">
-          <table className="min-w-[980px] w-full table-fixed border-separate border-spacing-0">
+          <table className="min-w-[900px] w-full table-fixed border-separate border-spacing-0">
             <thead>
               <tr>
-                <th className="sticky left-0 z-20 w-[92px] border-b border-r border-surface bg-[color-mix(in_srgb,var(--card)_96%,transparent)] px-3 py-4 text-left align-top backdrop-blur-xl">
+                <th className="sticky left-0 z-20 w-[82px] border-b border-r border-surface bg-[color-mix(in_srgb,var(--card)_96%,transparent)] px-2.5 py-3 text-left align-top backdrop-blur-xl">
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
                       Hora
                     </span>
-                    <span className="text-[13px] font-semibold text-foreground">Semana</span>
+                    <span className="text-[12px] font-semibold text-foreground">Semana</span>
                   </div>
                 </th>
                 {visibleWeekDays.map((day) => {
@@ -571,29 +571,29 @@ export default function AgendaPage() {
                   return (
                     <th
                       key={day.toISOString()}
-                      className="border-b border-r border-surface bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-2 py-3 text-center backdrop-blur-xl"
+                      className="border-b border-r border-surface bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-1.5 py-2.5 text-center backdrop-blur-xl"
                     >
                       <div
-                        className={`mx-auto flex min-h-[88px] w-full max-w-[124px] flex-col items-center justify-center rounded-[24px] border px-3 py-3 text-center transition-all duration-300 ${isCurrentDay
-                            ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_18px_34px_rgba(15,23,42,0.18)]"
+                        className={`mx-auto flex min-h-[74px] w-full max-w-[108px] flex-col items-center justify-center rounded-[20px] border px-2 py-2.5 text-center transition-all duration-300 ${isCurrentDay
+                            ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_14px_28px_rgba(15,23,42,0.16)]"
                             : "border-surface bg-[color-mix(in_srgb,var(--background)_74%,transparent)] text-foreground"
                           }`}
                       >
                         <p
-                          className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isCurrentDay ? "text-white/75" : "text-muted"
+                          className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${isCurrentDay ? "text-white/75" : "text-muted"
                             }`}
                         >
                           {formatWeekDay(day)}
                         </p>
-                        <p className="mt-1 text-[30px] font-semibold leading-none">{day.getDate()}</p>
+                        <p className="mt-1 text-[24px] font-semibold leading-none">{day.getDate()}</p>
                         <p
-                          className={`mt-1 text-[11px] font-medium capitalize ${isCurrentDay ? "text-white/82" : "text-muted"
+                          className={`mt-1 text-[10px] font-medium capitalize ${isCurrentDay ? "text-white/82" : "text-muted"
                             }`}
                         >
                           {formatShortMonth(day)}
                         </p>
                         {isCurrentDay ? (
-                          <span className="mt-2 rounded-full bg-white/16 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+                          <span className="mt-1.5 rounded-full bg-white/16 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white">
                             Hoy
                           </span>
                         ) : null}
@@ -607,9 +607,9 @@ export default function AgendaPage() {
             <tbody>
               {BASE_TIME_SLOTS.map((slot) => (
                 <tr key={slot}>
-                  <td className="sticky left-0 z-10 h-[78px] border-r border-t border-surface bg-[color-mix(in_srgb,var(--card)_96%,transparent)] px-3 align-top backdrop-blur-xl">
-                    <div className="flex h-full items-start justify-end pt-2.5">
-                      <span className="rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_72%,transparent)] px-2.5 py-1 text-[11px] font-semibold text-muted shadow-[0_6px_14px_rgba(15,23,42,0.08)]">
+                  <td className="sticky left-0 z-10 h-[64px] border-r border-t border-surface bg-[color-mix(in_srgb,var(--card)_96%,transparent)] px-2.5 align-top backdrop-blur-xl">
+                    <div className="flex h-full items-start justify-end pt-2">
+                      <span className="rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_72%,transparent)] px-2 py-0.5 text-[10px] font-semibold text-muted shadow-[0_6px_12px_rgba(15,23,42,0.07)]">
                         {slot}
                       </span>
                     </div>
@@ -625,12 +625,12 @@ export default function AgendaPage() {
                     return (
                       <td
                         key={`${dateKey}-${slot}`}
-                        className={`h-[78px] min-w-[148px] border-r border-t border-surface px-2 py-2 align-top ${isCurrentDay
+                        className={`h-[64px] min-w-[136px] border-r border-t border-surface px-1.5 py-1.5 align-top ${isCurrentDay
                             ? "bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent)_8%,transparent),transparent)]"
                             : "bg-[color-mix(in_srgb,var(--card)_84%,transparent)]"
                           }`}
                       >
-                        <div className="flex h-full flex-col gap-1.5">
+                        <div className="flex h-full flex-col gap-1">
                           {dayTurns.map((item) => {
                             const style = getAppointmentStyle(item.status)
                             return (
@@ -638,12 +638,12 @@ export default function AgendaPage() {
                                 key={item.id}
                                 type="button"
                                 onClick={() => openAppointmentModal(item)}
-                                className={`w-full rounded-[18px] border px-2.5 py-2 text-left shadow-[0_10px_22px_rgba(15,23,42,0.10)] backdrop-blur-[10px] transition-all duration-300 ease-out hover:-translate-y-[1px] active:scale-[0.99] ${style.containerClass}`}
+                                className={`w-full rounded-[15px] border px-2 py-1.5 text-left shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-[10px] transition-all duration-300 ease-out hover:-translate-y-[1px] active:scale-[0.99] ${style.containerClass}`}
                               >
-                                <p className={`truncate text-[11px] font-semibold ${style.textClass}`}>
+                                <p className={`truncate text-[10px] font-semibold ${style.textClass}`}>
                                   {item.clientName}
                                 </p>
-                                <p className={`mt-0.5 truncate text-[10px] font-medium ${style.secondaryTextClass}`}>
+                                <p className={`mt-0.5 truncate text-[9px] font-medium ${style.secondaryTextClass}`}>
                                   {item.service}
                                 </p>
                               </button>
@@ -773,13 +773,13 @@ function MonthPicker({
   const days = Array.from({ length: 42 }, (_, index) => addDays(start, index))
 
   return (
-    <div className="z-10 w-[320px] rounded-[30px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-4 shadow-[0_28px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="z-10 w-[300px] rounded-[26px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-3.5 shadow-[0_24px_64px_rgba(15,23,42,0.16)] backdrop-blur-2xl">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
             Seleccionar fecha
           </p>
-          <p className="mt-1 text-base font-semibold capitalize text-foreground">{monthLabel}</p>
+          <p className="mt-1 text-[15px] font-semibold capitalize text-foreground">{monthLabel}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -787,7 +787,7 @@ function MonthPicker({
             onClick={() =>
               onMonthChange(new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1))
             }
-            className="grid h-9 w-9 place-items-center rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_74%,transparent)] text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
+            className="grid h-8 w-8 place-items-center rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_74%,transparent)] text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
           >
             <ChevronLeft size={14} />
           </button>
@@ -795,7 +795,7 @@ function MonthPicker({
             onClick={() =>
               onMonthChange(new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1))
             }
-            className="grid h-9 w-9 place-items-center rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_74%,transparent)] text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
+            className="grid h-8 w-8 place-items-center rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_74%,transparent)] text-muted transition-all duration-200 hover:bg-card hover:text-foreground"
           >
             <ChevronRight size={14} />
           </button>
@@ -808,7 +808,7 @@ function MonthPicker({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-y-2">
+      <div className="grid grid-cols-7 gap-y-1.5">
         {days.map((day) => {
           const inCurrentMonth = day.getMonth() === monthCursor.getMonth()
           const selectable = isSelectableDate(day, minSelectableDate)
@@ -819,7 +819,7 @@ function MonthPicker({
               key={day.toISOString()}
               onClick={() => selectable && onSelectDate(day)}
               disabled={!selectable}
-              className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-semibold transition-all duration-200 ${selected
+              className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-semibold transition-all duration-200 ${selected
                   ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]"
                   : inCurrentMonth
                     ? selectable
