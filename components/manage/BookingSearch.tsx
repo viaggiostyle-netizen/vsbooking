@@ -10,23 +10,31 @@ type BookingSearchProps = {
 
 export default function BookingSearch({ email, onEmailChange, onSearch }: BookingSearchProps) {
   return (
-    <div className="space-y-3">
-      <div>
-        <label className="mb-1.5 flex items-center gap-2 text-[14px] font-semibold text-foreground">
-          <Mail size={16} className="text-muted" />
-          Email
+    <div className="animate-apple-in space-y-4">
+      <div className="relative group">
+        <label className="mb-2 block text-[13px] font-bold uppercase tracking-wider text-muted/80 ml-1">
+          Tu correo electrónico
         </label>
-        <Input
-          value={email}
-          onChange={(event) => onEmailChange(event.target.value)}
-          placeholder="tucorreo@gmail.com"
-          className="h-[46px] rounded-[14px] border-border bg-input px-3 text-[15px] text-foreground placeholder:text-muted focus:border-foreground"
-        />
+        <div className="relative">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted/60 transition-colors group-focus-within:text-foreground">
+            <Mail size={18} />
+          </div>
+          <Input
+            value={email}
+            onChange={(event) => onEmailChange(event.target.value)}
+            placeholder="ejemplo@correo.com"
+            className="h-[54px] w-full rounded-2xl border-border/50 bg-background pl-12 pr-4 text-[16px] text-foreground placeholder:text-muted/40 transition-all focus:border-foreground/20 focus:ring-4 focus:ring-foreground/[0.03]"
+          />
+        </div>
       </div>
 
-      <Button onClick={onSearch} className="h-[48px] w-full rounded-[12px] py-3 text-[15px] font-[600]">
-        <Search size={16} />
-        Buscar cita
+      <Button 
+        onClick={onSearch} 
+        disabled={!email || !email.includes("@")}
+        className="h-[54px] w-full items-center gap-2 rounded-2xl bg-foreground text-[16px] font-bold text-background shadow-lg shadow-foreground/10 hover:shadow-foreground/20 active:scale-[0.98]"
+      >
+        <Search size={18} />
+        Buscar mi reserva
       </Button>
     </div>
   )
