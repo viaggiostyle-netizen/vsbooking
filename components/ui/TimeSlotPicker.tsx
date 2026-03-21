@@ -63,7 +63,7 @@ export default function TimeSlotPicker({
                             boxShadow: isSelected
                                 ? "0 15px 30px -10px rgba(0,0,0,0.3)"
                                 : "0 2px 5px -2px rgba(0,0,0,0.05)",
-                            opacity: isBlocked ? 0.35 : 1
+                            opacity: status === "past_due" ? 0.2 : isBlocked ? 0.45 : 1
                         }}
                         transition={{
                             type: "spring",
@@ -74,14 +74,21 @@ export default function TimeSlotPicker({
                             relative h-12 rounded-2xl text-[14px] font-semibold border backdrop-blur-xl transition-all duration-300 overflow-hidden
                             ${isSelected
                                 ? "bg-foreground text-background border-foreground z-10"
-                                : isBlocked
-                                    ? "bg-muted/10 text-muted/50 border-border/20 cursor-not-allowed grayscale"
-                                    : "bg-card/40 text-foreground border-border/60 hover:bg-card/60"
+                                : status === "past_due"
+                                    ? "bg-transparent text-muted/40 border-border/10 cursor-not-allowed"
+                                    : status === "booked"
+                                        ? "bg-muted/5 text-muted/60 border-border/20 cursor-not-allowed grayscale"
+                                        : status === "blocked"
+                                            ? "bg-muted/10 text-muted/50 border-border/20 cursor-not-allowed grayscale"
+                                            : "bg-card/40 text-foreground border-border/60 hover:bg-card/60"
                             }
                         `}
                     >
                         {time}
-                        {isBlocked && (
+                        {status === "booked" && (
+                            <div className="absolute inset-x-0 top-1/2 h-[1.5px] bg-red-400/20 -rotate-[22deg] pointer-events-none" />
+                        )}
+                        {status === "blocked" && (
                             <div className="absolute inset-x-0 top-1/2 h-[1px] bg-muted-foreground/30 -rotate-[22deg] pointer-events-none" />
                         )}
                     </motion.button>
