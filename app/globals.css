@@ -39,6 +39,7 @@
   --button-primary: #0f172a;
   --button-primary-strong: #020617;
   --button-primary-shadow: rgba(15, 23, 42, 0.25);
+  --admin-push-toggle-on: #060b1d;
   --radius: 1.25rem;
 }
 
@@ -60,6 +61,7 @@
   --button-primary: var(--accent);
   --button-primary-strong: var(--accent-strong);
   --button-primary-shadow: rgba(37, 99, 235, 0.25);
+  --admin-push-toggle-on: #1d4ed8;
 }
 
 body {
@@ -574,11 +576,11 @@ input {
 
 .admin-push-toggle {
   --toggle-track-off: #ff4a4a;
-  --toggle-track-on: #269fe5;
+  --toggle-track-on: var(--admin-push-toggle-on);
   --toggle-thumb-off: #181818;
   --toggle-thumb-on: #ffffff;
   --toggle-icon-off: #ff4a4a;
-  --toggle-icon-on: #269fe5;
+  --toggle-icon-on: var(--admin-push-toggle-on);
   position: relative;
   display: inline-flex;
   height: 40px;
@@ -683,7 +685,7 @@ input {
   background: var(--toggle-track-on);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 14px 28px rgba(38, 159, 229, 0.28);
+    0 14px 28px color-mix(in srgb, var(--toggle-track-on) 30%, transparent);
 }
 
 .admin-push-toggle.is-enabled .admin-push-toggle__track::before,
@@ -714,7 +716,7 @@ input {
 .admin-push-toggle.is-loading .admin-push-toggle__thumb {
   left: 41px;
   background: var(--toggle-thumb-on);
-  box-shadow: 0 12px 22px rgba(8, 87, 143, 0.24);
+  box-shadow: 0 12px 22px color-mix(in srgb, var(--toggle-track-on) 24%, transparent);
 }
 
 .admin-push-toggle.is-enabled .admin-push-toggle__bell,
