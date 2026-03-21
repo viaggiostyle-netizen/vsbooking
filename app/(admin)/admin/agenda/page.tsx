@@ -557,12 +557,11 @@ export default function AgendaPage() {
           <table className="min-w-[900px] w-full table-fixed border-separate border-spacing-0">
             <thead>
               <tr>
-                <th className="sticky left-0 z-20 w-[82px] border-b border-r border-surface bg-[color-mix(in_srgb,var(--card)_96%,transparent)] px-2.5 py-3 text-left align-top backdrop-blur-xl">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                <th className="sticky left-0 z-20 w-[82px] border-b border-r border-surface bg-[color-mix(in_srgb,var(--card)_96%,transparent)] px-2 py-2.5 text-center align-middle backdrop-blur-xl">
+                  <div className="flex min-h-[74px] items-center justify-center">
+                    <span className="inline-flex items-center justify-center rounded-full border border-surface bg-[color-mix(in_srgb,var(--background)_72%,transparent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-[0_6px_12px_rgba(15,23,42,0.07)]">
                       Hora
                     </span>
-                    <span className="text-[12px] font-semibold text-foreground">Semana</span>
                   </div>
                 </th>
                 {visibleWeekDays.map((day) => {

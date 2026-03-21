@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { Suspense, useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { motion } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 import { signIn } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
+import { useTheme } from "next-themes"
 import Logo from "@/components/branding/Logo"
 
 function AuthContent() {
@@ -13,9 +14,17 @@ function AuthContent() {
   const [error, setError] = useState("")
   const [googleReady, setGoogleReady] = useState<boolean | null>(null)
   const [missingEnv, setMissingEnv] = useState<string[]>([])
+  const { theme, resolvedTheme } = useTheme()
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
 
   const searchParams = useSearchParams()
   const authError = searchParams.get("error")
+  const activeTheme = theme === "system" ? resolvedTheme : theme
+  const isDark = mounted ? activeTheme === "dark" : false
 
   const authErrorMessage = useMemo(() => {
     if (!authError) return ""
@@ -92,10 +101,8 @@ function AuthContent() {
       initial={{ opacity: 0, scale: 0.985, y: 14 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.24, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-[30px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_90%,transparent))] px-6 py-8 shadow-[0_28px_80px_rgba(15,23,42,0.14)] backdrop-blur-2xl sm:px-10 sm:py-12"
+      className="relative overflow-hidden rounded-[30px] border border-border/60 bg-[color-mix(in_srgb,var(--card)_95%,transparent)] px-6 py-8 shadow-[0_28px_80px_rgba(15,23,42,0.14)] backdrop-blur-2xl sm:px-10 sm:py-12"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--foreground)_8%,transparent),transparent_68%)]" />
-
       <div className="relative mx-auto flex min-h-[calc(100dvh-210px)] max-w-[420px] flex-col items-center justify-center text-center sm:min-h-[520px]">
         <Link
           href="/"
@@ -106,7 +113,10 @@ function AuthContent() {
         </Link>
 
         <div className="mb-7 grid h-[78px] w-[78px] place-items-center rounded-[24px] border border-border/50 bg-[color-mix(in_srgb,var(--background)_72%,transparent)] shadow-[0_18px_36px_rgba(15,23,42,0.12)]">
-          <Logo size={46} className="h-[46px] w-[46px]" />
+          <Logo
+            size={46}
+            className={`h-[46px] w-[46px] ${isDark ? "mix-blend-screen brightness-110 contrast-110" : ""}`}
+          />
         </div>
 
         <h1 className="text-[34px] font-semibold tracking-[-0.03em] text-foreground sm:text-[40px]">
