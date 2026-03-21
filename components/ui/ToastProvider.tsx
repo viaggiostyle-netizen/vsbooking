@@ -73,8 +73,8 @@ export function AppToastProvider() {
       limit={4}
       closeButton={AppToastCloseButton}
       icon={AppToastIcon}
-      toastClassName={() => "app-toast"}
-      progressClassName={() => "app-toast-progress"}
+      toastClassName={(context) => `app-toast app-toast--${context?.type ?? "default"}`}
+      progressClassName={(context) => `app-toast-progress app-toast-progress--${context?.type ?? "default"}`}
     />
   )
 }

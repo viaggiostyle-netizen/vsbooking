@@ -15,6 +15,7 @@ import { listenAdminForegroundMessages } from "@/lib/firebase/client"
 import { signIn, signOut, useSession } from "next-auth/react"
 import {
   Activity,
+  Bell,
   CalendarDays,
   ChevronDown,
   CircleSlash2,
@@ -391,7 +392,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             >
               <span className="admin-push-toggle__track" aria-hidden="true">
                 <span className="admin-push-toggle__thumb">
-                  <span className="admin-push-toggle__bell" />
+                  <Bell size={16} strokeWidth={2.25} className="admin-push-toggle__bell" />
                 </span>
               </span>
               <span className="sr-only">{pushButtonLabel}</span>

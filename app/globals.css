@@ -669,44 +669,13 @@ input {
 }
 
 .admin-push-toggle__bell {
-  position: relative;
   display: block;
+  flex: none;
   height: 18px;
   width: 18px;
-  margin-top: -1px;
   color: var(--toggle-icon-off);
-  transition: color 280ms ease;
-}
-
-.admin-push-toggle__bell::before {
-  content: "";
-  position: absolute;
-  left: 2px;
-  top: 1px;
-  height: 12px;
-  width: 12px;
-  border-radius: 999px 999px 3px 3px;
-  background:
-    conic-gradient(from 125deg at 50% 50%, currentColor 0 109deg, transparent 0 100%),
-    linear-gradient(90deg, transparent 0 3px, currentColor 3px calc(100% - 3px), transparent calc(100% - 3px) 100%);
-  transform-origin: 50% 2px;
-}
-
-.admin-push-toggle__bell::after {
-  content: "";
-  position: absolute;
-  left: 7px;
-  top: 10px;
-  height: 12px;
-  width: 4px;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 50% 100%, currentColor 0 3px, transparent 4px),
-    radial-gradient(circle at 50% 2px, transparent 0 1px, currentColor 1px 2px, transparent 3px 100%);
-  background-repeat: no-repeat;
-  background-size: 100% 5px, 100% 100%;
-  background-position: 0 100%, 0 0;
-  transform-origin: 50% 2px;
+  transition: color 280ms ease, transform 280ms ease;
+  transform-origin: 50% 10%;
 }
 
 .admin-push-toggle.is-enabled .admin-push-toggle__track,
@@ -753,17 +722,9 @@ input {
   color: var(--toggle-icon-on);
 }
 
-.admin-push-toggle.is-enabled .admin-push-toggle__bell::before,
-.admin-push-toggle.is-enabled .admin-push-toggle__bell::after,
-.admin-push-toggle.is-loading .admin-push-toggle__bell::before,
-.admin-push-toggle.is-loading .admin-push-toggle__bell::after {
+.admin-push-toggle.is-enabled .admin-push-toggle__bell,
+.admin-push-toggle.is-loading .admin-push-toggle__bell {
   animation: adminPushBellMove 1s ease-out infinite;
-}
-
-.admin-push-toggle.is-enabled .admin-push-toggle__bell::after,
-.admin-push-toggle.is-loading .admin-push-toggle__bell::after {
-  animation-direction: reverse;
-  animation-delay: 0.18s;
 }
 
 .admin-push-toggle.is-blocked .admin-push-toggle__track {
@@ -877,7 +838,7 @@ input {
   border-color: rgba(16, 185, 129, 0.2);
 }
 
-.app-toast.Toastify__toast--success {
+.app-toast--success {
   overflow: visible;
   border: none;
   background: linear-gradient(135deg, #08c96d 0%, #04ae5d 100%);
@@ -885,7 +846,7 @@ input {
   box-shadow: 0 24px 46px rgba(2, 94, 56, 0.3);
 }
 
-.app-toast.Toastify__toast--success::before {
+.app-toast--success::before {
   content: "";
   position: absolute;
   left: -18px;
@@ -904,7 +865,7 @@ input {
   opacity: 0.96;
 }
 
-.app-toast.Toastify__toast--success::after {
+.app-toast--success::after {
   content: "";
   position: absolute;
   left: 74px;
@@ -920,7 +881,7 @@ input {
     -10px 28px 0 0 rgba(1, 91, 53, 0.98);
 }
 
-.app-toast.Toastify__toast--success .Toastify__toast-icon {
+.app-toast--success .Toastify__toast-icon {
   position: absolute;
   left: 28px;
   top: -18px;
@@ -929,15 +890,15 @@ input {
   padding: 0;
 }
 
-.app-toast.Toastify__toast--success .Toastify__toast-body {
+.app-toast--success .Toastify__toast-body {
   padding: 20px 64px 18px 118px;
 }
 
-.app-toast.Toastify__toast--success .app-toast-content {
+.app-toast--success .app-toast-content {
   gap: 5px;
 }
 
-.app-toast.Toastify__toast--success .app-toast-title {
+.app-toast--success .app-toast-title {
   font-size: 23px;
   font-weight: 600;
   line-height: 1.05;
@@ -946,7 +907,7 @@ input {
   color: #ffffff;
 }
 
-.app-toast.Toastify__toast--success .app-toast-message {
+.app-toast--success .app-toast-message {
   max-width: 18ch;
   font-size: 16px;
   font-weight: 600;
@@ -954,7 +915,7 @@ input {
   color: rgba(255, 255, 255, 0.96);
 }
 
-.app-toast.Toastify__toast--success .app-toast-icon--success {
+.app-toast--success .app-toast-icon--success {
   display: grid;
   height: 74px;
   width: 74px;
@@ -966,13 +927,13 @@ input {
   box-shadow: 0 12px 24px rgba(2, 94, 56, 0.26);
 }
 
-.app-toast.Toastify__toast--success .app-toast-icon--success svg {
+.app-toast--success .app-toast-icon--success svg {
   height: 34px;
   width: 34px;
   stroke-width: 3;
 }
 
-.app-toast.Toastify__toast--success .app-toast-close {
+.app-toast--success .app-toast-close {
   top: 16px;
   right: 16px;
   height: 32px;
@@ -982,14 +943,14 @@ input {
   color: rgba(255, 255, 255, 0.88);
 }
 
-.app-toast.Toastify__toast--success .app-toast-close:hover,
-.app-toast.Toastify__toast--success .app-toast-close:focus-visible {
+.app-toast--success .app-toast-close:hover,
+.app-toast--success .app-toast-close:focus-visible {
   border-color: rgba(255, 255, 255, 0.34);
   background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
 }
 
-.app-toast.Toastify__toast--success .app-toast-progress.Toastify__progress-bar {
+.app-toast--success .app-toast-progress {
   display: none;
 }
 
@@ -1039,20 +1000,20 @@ input {
   opacity: 1;
 }
 
-.app-toast-progress.Toastify__progress-bar--success {
+.app-toast-progress--success {
   background: linear-gradient(90deg, #34d399, #10b981);
 }
 
-.app-toast-progress.Toastify__progress-bar--error {
+.app-toast-progress--error {
   background: linear-gradient(90deg, #fb7185, #f43f5e);
 }
 
-.app-toast-progress.Toastify__progress-bar--warning {
+.app-toast-progress--warning {
   background: linear-gradient(90deg, #fbbf24, #f59e0b);
 }
 
-.app-toast-progress.Toastify__progress-bar--info,
-.app-toast-progress.Toastify__progress-bar--default {
+.app-toast-progress--info,
+.app-toast-progress--default {
   background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 72%, white), var(--accent));
 }
 
@@ -1109,28 +1070,28 @@ input {
     border-radius: 22px;
   }
 
-  .app-toast.Toastify__toast--success .Toastify__toast-icon {
+  .app-toast--success .Toastify__toast-icon {
     left: 20px;
   }
 
-  .app-toast.Toastify__toast--success .Toastify__toast-body {
+  .app-toast--success .Toastify__toast-body {
     padding: 22px 58px 18px 102px;
   }
 
-  .app-toast.Toastify__toast--success .app-toast-title {
+  .app-toast--success .app-toast-title {
     font-size: 21px;
   }
 
-  .app-toast.Toastify__toast--success .app-toast-message {
+  .app-toast--success .app-toast-message {
     font-size: 15px;
   }
 
-  .app-toast.Toastify__toast--success .app-toast-icon--success {
+  .app-toast--success .app-toast-icon--success {
     height: 68px;
     width: 68px;
   }
 
-  .app-toast.Toastify__toast--success::before {
+  .app-toast--success::before {
     left: -26px;
     width: 122px;
     height: 102px;
