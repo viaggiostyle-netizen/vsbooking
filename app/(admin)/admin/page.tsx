@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useMemo, useState } from "react"
 import {
@@ -208,45 +208,87 @@ function PendingTurnRow({
   const whatsappMessage = buildWhatsappMessage(appointment)
 
   return (
-    <article className="card rounded-2xl border border-surface bg-surface p-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
+    <article className="card group relative overflow-hidden rounded-[26px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all hover:bg-card/40">
+      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div className="flex-1">
           <div className="flex items-center gap-3">
-            <p className="text-[16px] font-medium">{appointment.time}</p>
-            <p className="text-[16px] font-medium">{appointment.clientName}</p>
-            <span className="rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
+            <p className="text-[18px] font-bold tracking-tight text-foreground">{appointment.time}</p>
+            <p className="text-[18px] font-semibold tracking-tight text-foreground">{appointment.clientName}</p>
+            <span className="rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-tight text-[var(--accent)]">
               Pendiente
             </span>
           </div>
-          <p className="mt-1 text-sm text-muted">
-            {appointment.service} &nbsp; {formatMoney(appointment.price)}
+          <p className="mt-1 text-[14px] font-medium text-muted">
+            {appointment.service} &nbsp; <span className="text-foreground/90 font-bold">{formatMoney(appointment.price)}</span>
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-sm">
+        <div className="grid grid-cols-2 gap-2 md:flex md:items-center md:gap-3">
           <a
             href={`https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 rounded-2xl border border-surface px-3 py-1.5 hover:bg-card"
+            className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-surface bg-card/60 px-4 text-[13px] font-bold text-foreground transition-all hover:bg-card md:col-auto md:h-9 md:rounded-2xl md:px-3 md:font-medium"
           >
-            <MessageCircle size={14} className="text-emerald-400" /> WhatsApp
+            <MessageCircle size={15} className="text-emerald-400" /> 
+            <span>WhatsApp</span>
           </a>
-          <ActionIcon title="Completar" onClick={() => onStatusChange("completed")} icon={<CheckCircle2 size={16} className="text-emerald-400" />} />
-          <ActionIcon title="Avisó" onClick={() => onStatusChange("no_vino_aviso")} icon={<UserX size={16} className="text-orange-500" />} />
-          <ActionIcon title="No-show" onClick={() => onStatusChange("no_vino_no_aviso")} icon={<EyeOff size={16} className="text-rose-400" />} />
-          <ActionIcon title="Editar" onClick={onEdit} icon={<Pencil size={16} />} />
-          <ActionIcon title="Eliminar" onClick={onDelete} icon={<Trash2 size={16} className="text-red-500" />} />
+
+          <DashboardAction 
+            label="Completar" 
+            onClick={() => onStatusChange("completed")} 
+            icon={<CheckCircle2 size={16} className="text-emerald-400" />} 
+          />
+          <DashboardAction 
+            label="Avisó" 
+            onClick={() => onStatusChange("no_vino_aviso")} 
+            icon={<UserX size={16} className="text-orange-500" />} 
+          />
+          <DashboardAction 
+            label="No-show" 
+            onClick={() => onStatusChange("no_vino_no_aviso")} 
+            icon={<EyeOff size={16} className="text-rose-400" />} 
+          />
+          
+          <div className="col-span-2 flex gap-2 md:col-auto md:gap-1.5">
+            <DashboardAction 
+              label="Editar" 
+              onClick={onEdit} 
+              icon={<Pencil size={15} />} 
+              compact
+            />
+            <DashboardAction 
+              label="Eliminar" 
+              onClick={onDelete} 
+              icon={<Trash2 size={15} className="text-red-500" />} 
+              compact
+            />
+          </div>
         </div>
       </div>
     </article>
   )
 }
 
-function ActionIcon({ title, onClick, icon }: { title: string; onClick: () => void; icon: React.ReactNode }) {
+function DashboardAction({ 
+  label, 
+  onClick, 
+  icon, 
+  compact = false 
+}: { 
+  label: string; 
+  onClick: () => void; 
+  icon: React.ReactNode;
+  compact?: boolean;
+}) {
   return (
-    <button title={title} onClick={onClick} className="rounded-2xl p-1.5 hover:bg-card">
+    <button 
+      onClick={onClick} 
+      className={`flex h-11 items-center justify-center gap-2.5 rounded-xl border border-surface bg-card/60 px-3 transition-all active:scale-[0.98] hover:bg-card md:h-9 md:w-9 md:rounded-full md:p-0 ${compact ? 'flex-1 md:flex-none' : ''}`}
+      title={label}
+    >
       {icon}
+      <span className="text-[13px] font-bold text-foreground md:hidden">{label}</span>
     </button>
   )
 }

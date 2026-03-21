@@ -560,7 +560,42 @@ export default function AgendaPage() {
         </div>
       </div>
 
+      <div className="md:hidden mb-6">
+        <div className="flex gap-2.5 overflow-x-auto pb-4 no-scrollbar px-1">
+          {weekDays.map((day) => {
+            const isSelected = isSameDay(day, selectedDate)
+            const isToday = isSameDay(day, todayInArgentina)
+            const dateKey = toDateKey(day)
+
+            return (
+              <button
+                key={dateKey}
+                onClick={() => setSelectedDate(day)}
+                className={`flex flex-col items-center justify-center min-w-[64px] h-[88px] rounded-[22px] border transition-all duration-300 active:scale-95 ${
+                  isSelected
+                    ? "bg-[var(--accent)] border-[var(--accent)] text-white shadow-[0_14px_28px_rgba(15,23,42,0.16)] scale-105"
+                    : "bg-card/40 border-surface text-muted"
+                }`}
+              >
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? "text-white/70" : "text-muted/60"}`}>
+                  {formatWeekDay(day).slice(0, 3)}
+                </span>
+                <span className="text-[22px] font-bold mt-0.5">{day.getDate()}</span>
+                {isToday && (
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? "bg-white" : "bg-[var(--accent)]"}`} />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <div className="md:hidden space-y-4 mb-8">
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h2 className="text-[18px] font-bold tracking-tight">Turnos de hoy</h2>
+          <span className="text-[13px] font-medium text-muted capitalize">{formatLongDate(selectedDate)}</span>
+        </div>
+
         {appointmentsForSelectedDate.length === 0 ? (
           <div className="rounded-[26px] border border-surface bg-card/40 p-10 text-center backdrop-blur-xl">
             <p className="text-sm font-medium text-muted">No hay citas para este día.</p>
@@ -614,11 +649,12 @@ export default function AgendaPage() {
                           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 0 5.414 0 12.05c0 2.123.551 4.197 1.594 6.03l-1.692 6.175 6.32-1.658c1.776.968 3.774 1.478 5.817 1.479h.005c6.635 0 12.05-5.414 12.05-12.05 0-3.212-1.25-6.231-3.515-8.497z" />
                         </svg>
                       </div>
-                      WhatsApp
                     </a>
-                    <div className="grid h-6 w-6 place-items-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      <Check size={14} strokeWidth={3} />
-                    </div>
+                    {canonical === "completed" && (
+                      <div className="grid h-6 w-6 place-items-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        <Check size={14} strokeWidth={3} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -924,6 +960,14 @@ function formatWeekRange(start: Date, end: Date) {
 function formatWeekDay(date: Date) {
   const day = new Intl.DateTimeFormat("es-AR", { weekday: "short" }).format(date)
   return day.replace(".", "").toUpperCase()
+}
+
+function formatLongDate(date: Date) {
+  return new Intl.DateTimeFormat("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(date)
 }
 
 function formatShortMonth(date: Date) {
