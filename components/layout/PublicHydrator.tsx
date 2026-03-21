@@ -6,6 +6,7 @@ import { useOrganizationStore } from "@/stores/useOrganizationStore"
 import { usePromotionsStore } from "@/stores/usePromotionsStore"
 import { useServicesStore } from "@/stores/useServicesStore"
 import { syncOrganizationFromSupabase } from "@/lib/admin-organization"
+import { syncSettingsFromServer } from "@/lib/settings-storage"
 
 export default function PublicHydrator() {
   const hydrateServices = useServicesStore((state) => state.hydrateServices)
@@ -15,6 +16,7 @@ export default function PublicHydrator() {
 
   useEffect(() => {
     void (async () => {
+      await syncSettingsFromServer()
       await syncOrganizationFromSupabase()
       hydrateServices()
       hydratePromotions()

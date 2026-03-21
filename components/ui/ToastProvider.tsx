@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertCircle, Check, Info, TriangleAlert, X } from "lucide-react"
+import { AlertCircle, Info, TriangleAlert, X } from "lucide-react"
 import {
   Slide,
   ToastContainer,
@@ -11,11 +11,7 @@ import "react-toastify/dist/ReactToastify.css"
 
 function AppToastIcon({ type }: IconProps) {
   if (type === "success") {
-    return (
-      <span className="app-toast-icon app-toast-icon--success" aria-hidden>
-        <Check size={18} />
-      </span>
-    )
+    return null
   }
 
   if (type === "error") {

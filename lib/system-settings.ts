@@ -1,4 +1,9 @@
-type SystemSettingKey = "appointment_cancellation_hours"
+import { DEFAULT_SETTINGS } from "@/lib/settings-storage"
+
+type SystemSettingKey =
+  | "appointment_cancellation_hours"
+  | "appointment_cancellation_message"
+  | "appointment_whatsapp_contact"
 
 type SystemSettingRow = {
   id: string
@@ -77,24 +82,72 @@ async function upsertSystemSetting(key: SystemSettingKey, value: string): Promis
   }
 }
 
-export async function getAppointmentCancellationHours(): Promise<number> {
+export type CancellationSettings = {
+  hours: number
+  blockedMessage: string
+  whatsappContact: string
+}
+
+export async function getCancellationSettings(): Promise<CancellationSettings> {
   try {
-    const value = await fetchSystemSetting("appointment_cancellation_hours")
-    const parsed = Number(value)
-    if (!Number.isFinite(parsed) || parsed <= 0) return 3
-    return Math.floor(parsed)
+    const [hoursValue, blockedMessageValue, whatsappContactValue] = await Promise.all([
+      fetchSystemSetting("appointment_cancellation_hours"),
+      fetchSystemSetting("appointment_cancellation_message"),
+      fetchSystemSetting("appointment_whatsapp_contact"),
+    ])
+
+    const parsedHours = Number(hoursValue)
+
+    return {
+      hours:
+        Number.isFinite(parsedHours) && parsedHours > 0
+          ? Math.floor(parsedHours)
+          : DEFAULT_SETTINGS.cancellationMinHours,
+      blockedMessage:
+        blockedMessageValue?.trim() || DEFAULT_SETTINGS.cancellationBlockedMessage,
+      whatsappContact:
+        whatsappContactValue?.trim() || DEFAULT_SETTINGS.whatsappContact,
+    }
   } catch (error) {
-    console.error("Failed to read appointment cancellation hours", error)
-    return 3
+    console.error("Failed to read cancellation settings", error)
+    return {
+      hours: DEFAULT_SETTINGS.cancellationMinHours,
+      blockedMessage: DEFAULT_SETTINGS.cancellationBlockedMessage,
+      whatsappContact: DEFAULT_SETTINGS.whatsappContact,
+    }
   }
+}
+
+export async function setCancellationSettings(settings: CancellationSettings): Promise<void> {
+  const hours =
+    Number.isFinite(settings.hours) && settings.hours > 0
+      ? Math.floor(settings.hours)
+      : DEFAULT_SETTINGS.cancellationMinHours
+  const blockedMessage =
+    settings.blockedMessage.trim() || DEFAULT_SETTINGS.cancellationBlockedMessage
+  const whatsappContact =
+    settings.whatsappContact.trim() || DEFAULT_SETTINGS.whatsappContact
+
+  try {
+    await Promise.all([
+      upsertSystemSetting("appointment_cancellation_hours", String(hours)),
+      upsertSystemSetting("appointment_cancellation_message", blockedMessage),
+      upsertSystemSetting("appointment_whatsapp_contact", whatsappContact),
+    ])
+  } catch (error) {
+    console.error("Failed to write cancellation settings", error)
+  }
+}
+
+export async function getAppointmentCancellationHours(): Promise<number> {
+  const settings = await getCancellationSettings()
+  return settings.hours
 }
 
 export async function setAppointmentCancellationHours(hours: number): Promise<void> {
-  const safe = Number.isFinite(hours) && hours > 0 ? Math.floor(hours) : 3
-  try {
-    await upsertSystemSetting("appointment_cancellation_hours", String(safe))
-  } catch (error) {
-    console.error("Failed to write appointment cancellation hours", error)
-  }
+  const current = await getCancellationSettings()
+  await setCancellationSettings({
+    ...current,
+    hours,
+  })
 }
-

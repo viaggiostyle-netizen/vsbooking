@@ -3,34 +3,22 @@
 import { create } from "zustand"
 import type { DateBlock } from "@/types/DateBlock"
 import type { OrganizationState } from "@/types/organization"
-import type { Settings } from "@/types/Settings"
 import type { TimeBlock } from "@/types/TimeBlock"
 import type { WorkBlock } from "@/types/WorkBlock"
 import { readOrganizationData } from "@/lib/admin-organization"
+import { DEFAULT_SETTINGS, readSettingsStorage } from "@/lib/settings-storage"
 
 type OrganizationStore = OrganizationState & {
   hydrateOrganization: () => void
 }
 
-const SETTINGS_KEY = "barber-settings-v1"
 const WORK_BLOCKS_KEY = "barber-work-blocks-v1"
 const DATE_BLOCKS_KEY = "barber-date-blocks-v1"
 const TIME_BLOCKS_KEY = "barber-time-blocks-v1"
 
-const defaultSettings: Settings = {
-  turnDuration: 40,
-  breakDuration: 0,
-  minAdvanceBooking: 0,
-  maxBookingsPerDay: null,
-  cancellationMinHours: 24,
-  cancellationBlockedMessage:
-    "Las cancelaciones fuera de plazo no estan permitidas. Por favor comunicate por WhatsApp con la barberia.",
-  whatsappContact: "+5491112345678",
-}
-
 export const useOrganizationStore = create<OrganizationStore>((set) => ({
   timezone: "America/Argentina/Buenos_Aires",
-  settings: defaultSettings,
+  settings: DEFAULT_SETTINGS,
   recurringBlocks: [],
   manualDateBlocks: [],
   manualTimeBlocks: [],
@@ -39,7 +27,7 @@ export const useOrganizationStore = create<OrganizationStore>((set) => ({
       const organizationData = readOrganizationData()
       const recurringBlocks = mapSchedulesToWorkBlocks(organizationData.schedules)
       return {
-        settings: readSettings(),
+        settings: readSettingsStorage(),
         recurringBlocks:
           recurringBlocks.length > 0 ? recurringBlocks : readList(WORK_BLOCKS_KEY, isWorkBlock),
         manualDateBlocks: readList(DATE_BLOCKS_KEY, isDateBlock),
@@ -47,36 +35,6 @@ export const useOrganizationStore = create<OrganizationStore>((set) => ({
       }
     }),
 }))
-
-function readSettings(): Settings {
-  if (typeof window === "undefined") return defaultSettings
-  const raw = localStorage.getItem(SETTINGS_KEY)
-  if (!raw) return defaultSettings
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<Settings>
-    return {
-      turnDuration: typeof parsed.turnDuration === "number" ? parsed.turnDuration : defaultSettings.turnDuration,
-      breakDuration: typeof parsed.breakDuration === "number" ? parsed.breakDuration : defaultSettings.breakDuration,
-      minAdvanceBooking:
-        typeof parsed.minAdvanceBooking === "number" ? parsed.minAdvanceBooking : defaultSettings.minAdvanceBooking,
-      maxBookingsPerDay:
-        typeof parsed.maxBookingsPerDay === "number" ? parsed.maxBookingsPerDay : defaultSettings.maxBookingsPerDay,
-      cancellationMinHours:
-        typeof parsed.cancellationMinHours === "number"
-          ? parsed.cancellationMinHours
-          : defaultSettings.cancellationMinHours,
-      cancellationBlockedMessage:
-        typeof parsed.cancellationBlockedMessage === "string"
-          ? parsed.cancellationBlockedMessage
-          : defaultSettings.cancellationBlockedMessage,
-      whatsappContact:
-        typeof parsed.whatsappContact === "string" ? parsed.whatsappContact : defaultSettings.whatsappContact,
-    }
-  } catch {
-    return defaultSettings
-  }
-}
 
 function readList<T>(key: string, guard: (value: unknown) => value is T): T[] {
   if (typeof window === "undefined") return []

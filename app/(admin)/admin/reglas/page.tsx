@@ -5,6 +5,7 @@ import { Clock3, MessageSquare, Phone, Save } from "lucide-react"
 import { useSettings } from "@/context/SettingsContext"
 import { showErrorToast, showSuccessToast } from "@/components/ui/app-toast"
 import { buildWhatsappUrl, evaluateCancellationRule } from "@/lib/rulesUtils"
+import { DEFAULT_SETTINGS, syncSettingsFromServer } from "@/lib/settings-storage"
 
 export default function ReglasPage() {
   const { settings, updateSettings } = useSettings()
@@ -26,15 +27,34 @@ export default function ReglasPage() {
   useEffect(() => {
     void (async () => {
       try {
-        const response = await fetch("/api/settings/cancellation", { cache: "no-store" })
-        if (!response.ok) {
-          throw new Error("No se pudo obtener la configuracion de cancelacion.")
-        }
-        const payload = (await response.json()) as { hours?: number }
-        const hours = Number(payload.hours)
-        if (Number.isFinite(hours) && hours > 0) {
-          updateSettings({ cancellationMinHours: Math.floor(hours) })
-          setMinHours(String(Math.floor(hours)))
+        const synced = await syncSettingsFromServer()
+        const nextSettings = synced ?? settings
+
+        updateSettings({
+          cancellationMinHours: nextSettings.cancellationMinHours,
+          cancellationBlockedMessage: nextSettings.cancellationBlockedMessage,
+          whatsappContact: nextSettings.whatsappContact,
+        })
+
+        setMinHours(String(nextSettings.cancellationMinHours))
+        setBlockedMessage(nextSettings.cancellationBlockedMessage)
+        setWhatsappContact(nextSettings.whatsappContact)
+
+        const shouldMigrateToServer =
+          nextSettings.cancellationMinHours !== DEFAULT_SETTINGS.cancellationMinHours ||
+          nextSettings.cancellationBlockedMessage !== DEFAULT_SETTINGS.cancellationBlockedMessage ||
+          nextSettings.whatsappContact !== DEFAULT_SETTINGS.whatsappContact
+
+        if (shouldMigrateToServer) {
+          void fetch("/api/settings/cancellation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              hours: nextSettings.cancellationMinHours,
+              blockedMessage: nextSettings.cancellationBlockedMessage,
+              whatsappContact: nextSettings.whatsappContact,
+            }),
+          }).catch(() => null)
         }
       } catch (error) {
         const message =
@@ -65,6 +85,13 @@ export default function ReglasPage() {
       return
     }
 
+    if (!whatsappContact.trim()) {
+      const message = "Ingresa un WhatsApp de contacto."
+      setFeedback(message)
+      showErrorToast(message, { title: "WhatsApp obligatorio" })
+      return
+    }
+
     updateSettings({
       cancellationMinHours: Math.floor(parsedHours),
       cancellationBlockedMessage: blockedMessage.trim(),
@@ -76,7 +103,11 @@ export default function ReglasPage() {
         const response = await fetch("/api/settings/cancellation", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ hours: Math.floor(parsedHours) }),
+          body: JSON.stringify({
+            hours: Math.floor(parsedHours),
+            blockedMessage: blockedMessage.trim(),
+            whatsappContact: whatsappContact.trim(),
+          }),
         })
 
         if (!response.ok) {

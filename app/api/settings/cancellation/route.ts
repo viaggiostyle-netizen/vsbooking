@@ -4,8 +4,8 @@ import { logAdminAction } from "@/lib/admin-logs"
 import { authOptions } from "@/lib/auth/options"
 import { checkIfEmailIsAdmin, normalizeEmail } from "@/lib/auth/admins"
 import {
-  getAppointmentCancellationHours,
-  setAppointmentCancellationHours,
+  getCancellationSettings,
+  setCancellationSettings,
 } from "@/lib/system-settings"
 
 async function ensureAuthorizedAdmin() {
@@ -25,11 +25,8 @@ async function ensureAuthorizedAdmin() {
 }
 
 export async function GET() {
-  const auth = await ensureAuthorizedAdmin()
-  if ("response" in auth) return auth.response
-
-  const hours = await getAppointmentCancellationHours()
-  return NextResponse.json({ hours })
+  const settings = await getCancellationSettings()
+  return NextResponse.json(settings)
 }
 
 export async function POST(req: Request) {
@@ -37,8 +34,14 @@ export async function POST(req: Request) {
   if ("response" in auth) return auth.response
 
   try {
-    const body = (await req.json()) as { hours?: number }
+    const body = (await req.json()) as {
+      hours?: number
+      blockedMessage?: string
+      whatsappContact?: string
+    }
     const parsed = Number(body?.hours)
+    const blockedMessage = typeof body?.blockedMessage === "string" ? body.blockedMessage.trim() : ""
+    const whatsappContact = typeof body?.whatsappContact === "string" ? body.whatsappContact.trim() : ""
 
     if (!Number.isFinite(parsed) || parsed <= 0) {
       return NextResponse.json(
@@ -47,11 +50,29 @@ export async function POST(req: Request) {
       )
     }
 
-    await setAppointmentCancellationHours(parsed)
+    if (!blockedMessage) {
+      return NextResponse.json(
+        { message: "El mensaje de bloqueo es obligatorio." },
+        { status: 400 }
+      )
+    }
+
+    if (!whatsappContact) {
+      return NextResponse.json(
+        { message: "El WhatsApp de contacto es obligatorio." },
+        { status: 400 }
+      )
+    }
+
+    await setCancellationSettings({
+      hours: parsed,
+      blockedMessage,
+      whatsappContact,
+    })
     void logAdminAction({
       action: "cancellation_policy_updated",
       actorEmail: auth.email,
-      targetLabel: `${Math.floor(parsed)} horas de anticipacion`,
+      targetLabel: `${Math.floor(parsed)} horas de anticipacion - ${whatsappContact}`,
     })
     return NextResponse.json({ ok: true })
   } catch (error) {

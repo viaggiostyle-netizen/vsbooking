@@ -105,7 +105,13 @@ create table if not exists public.system_settings (
 );
 
 insert into public.system_settings (setting_key, setting_value)
-values ('appointment_cancellation_hours', '3')
+values
+  ('appointment_cancellation_hours', '24'),
+  (
+    'appointment_cancellation_message',
+    'Las cancelaciones fuera de plazo no estan permitidas. Por favor comunicate por WhatsApp con la barberia.'
+  ),
+  ('appointment_whatsapp_contact', '+5491112345678')
 on conflict (setting_key) do nothing;
 
 insert into public.admins (email)

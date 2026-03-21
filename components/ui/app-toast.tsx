@@ -1,5 +1,6 @@
 "use client"
 
+import { Check } from "lucide-react"
 import { toast, type ToastOptions } from "react-toastify"
 
 type AppToastVariant = "success" | "error" | "info" | "warning"
@@ -21,7 +22,29 @@ function getDefaultTitle(variant: AppToastVariant) {
   }
 }
 
-function AppToastContent({ title, message }: { title: string; message: string }) {
+function AppToastContent({
+  variant,
+  title,
+  message,
+}: {
+  variant: AppToastVariant
+  title: string
+  message: string
+}) {
+  if (variant === "success") {
+    return (
+      <div className="app-toast-success">
+        <span className="app-toast-success__badge" aria-hidden>
+          <Check size={26} />
+        </span>
+        <div className="app-toast-success__copy">
+          <span className="app-toast-success__title">{title}</span>
+          <span className="app-toast-success__message">{message}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="app-toast-content">
       <span className="app-toast-title">{title}</span>
@@ -32,7 +55,7 @@ function AppToastContent({ title, message }: { title: string; message: string })
 
 function showToast(variant: AppToastVariant, message: string, options: AppToastOptions = {}) {
   const { title = getDefaultTitle(variant), ...toastOptions } = options
-  const content = <AppToastContent title={title} message={message} />
+  const content = <AppToastContent variant={variant} title={title} message={message} />
 
   switch (variant) {
     case "success":
