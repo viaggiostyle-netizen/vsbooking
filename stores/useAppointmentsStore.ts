@@ -17,6 +17,7 @@ import { validateBookingContact } from "@/lib/validation/booking"
 type CreateAppointmentArgs = {
   payload: BookingPayload
   promotions: Promotion[]
+  groupId?: string
 }
 
 type StoreState = {
@@ -64,8 +65,8 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
       set({ appointments: remote })
     })
   },
-  createAppointment: async ({ payload, promotions }) => {
-    const bookingGroupId = createId()
+  createAppointment: async ({ payload, promotions, groupId }) => {
+    const bookingGroupId = groupId ?? createId()
 
     const serviceDurations = payload.services.map((service) => service.durationMin)
     const times = buildConsecutiveTimes(payload.startTime, serviceDurations)
