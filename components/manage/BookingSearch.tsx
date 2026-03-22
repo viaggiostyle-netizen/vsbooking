@@ -16,14 +16,14 @@ export default function BookingSearch({ email, onEmailChange, onSearch }: Bookin
           Tu correo electrónico
         </label>
         <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted/60 transition-colors group-focus-within:text-foreground">
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 text-muted/60 transition-colors group-focus-within:text-foreground">
             <Mail size={18} />
           </div>
           <Input
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
             placeholder="ejemplo@correo.com"
-            className="h-[54px] w-full rounded-2xl border-border/50 bg-background pl-14 pr-4 text-[16px] text-foreground placeholder:text-muted/40 transition-all focus:border-foreground/20 focus:ring-4 focus:ring-foreground/[0.03]"
+            className="h-[54px] w-full rounded-2xl border-border/50 bg-background !pl-[74px] pr-4 text-[16px] text-foreground placeholder:text-muted/40 transition-all focus:border-foreground/20 focus:ring-4 focus:ring-foreground/[0.03]"
           />
         </div>
       </div>
