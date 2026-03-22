@@ -11,12 +11,14 @@ export default function ThemeToggle() {
     () => true,
     () => false
   )
+
   const currentTheme = theme === "system" ? resolvedTheme : theme
-  const isDark = currentTheme === "dark"
 
   if (!mounted) {
     return <span aria-hidden className="h-9 w-9" />
   }
+
+  const isDark = currentTheme === "dark"
 
   return (
     <button
