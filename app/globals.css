@@ -779,6 +779,7 @@ input {
 
 .Toastify__toast-container--top-right {
   align-items: stretch;
+  top: max(28px, calc(env(safe-area-inset-top) + 8px));
 }
 
 .app-toast {
@@ -876,7 +877,8 @@ input {
 
 .app-toast--success .Toastify__toast-body,
 .app-toast--error .Toastify__toast-body {
-  padding: 1rem 2rem 1rem 6rem;
+  min-height: 94px;
+  padding: 1.1rem 3.35rem 1rem 6.85rem;
   display: block;
 }
 
@@ -938,11 +940,11 @@ input {
 .app-toast--error::after {
   content: "";
   position: absolute;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 3.15rem;
+  height: 3.15rem;
   background: var(--app-toast-clr);
-  top: -1.75rem;
-  left: 2rem;
+  top: -1.2rem;
+  left: 2.1rem;
   border-radius: 3rem;
   padding-top: 0.2rem;
   display: flex;
@@ -1016,6 +1018,7 @@ input {
   position: relative;
   font-size: 1.35rem;
   margin: 0;
+  max-width: 100%;
   line-height: 1.35rem;
   font-weight: 300;
   letter-spacing: 0;
@@ -1053,7 +1056,7 @@ input {
 .app-toast--success .app-toast-close,
 .app-toast--error .app-toast-close {
   top: 0.9rem;
-  right: 1rem;
+  right: 1.1rem;
   height: 1.35rem;
   width: 1.35rem;
   border: none;
@@ -1313,7 +1316,7 @@ input {
   }
 
   .Toastify__toast-container--top-right {
-    top: max(12px, env(safe-area-inset-top));
+    top: max(24px, calc(env(safe-area-inset-top) + 6px));
   }
 
   .app-toast {
@@ -1323,7 +1326,8 @@ input {
 
   .app-toast--success .Toastify__toast-body,
   .app-toast--error .Toastify__toast-body {
-    padding: 1rem 1.75rem 1rem 5.65rem;
+    min-height: 90px;
+    padding: 1rem 3rem 0.95rem 6.2rem;
   }
 
   .app-toast--success .app-toast-title,
