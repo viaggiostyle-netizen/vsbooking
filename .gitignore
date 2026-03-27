@@ -40,3 +40,6 @@ next-env.d.ts
 # IDE
 .vscode
 .cursor
+
+# local sensitive files
+supabase/DATOS.txt
