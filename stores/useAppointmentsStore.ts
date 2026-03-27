@@ -24,6 +24,7 @@ type StoreState = {
   appointments: Appointment[]
   lastCreatedGroupId: string | null
   hydrateAppointments: () => void
+  replaceAppointments: (appointments: Appointment[]) => void
   createAppointment: (args: CreateAppointmentArgs) => Promise<string>
   findByEmail: (email: string) => Appointment[]
   cancelAppointment: (id: string) => void
@@ -64,6 +65,11 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
       syncWithAdminAppointments(remote)
       set({ appointments: remote })
     })
+  },
+  replaceAppointments: (appointments) => {
+    persistPublicAppointments(appointments)
+    syncWithAdminAppointments(appointments)
+    set({ appointments })
   },
   createAppointment: async ({ payload, promotions, groupId }) => {
     const bookingGroupId = groupId ?? createId()

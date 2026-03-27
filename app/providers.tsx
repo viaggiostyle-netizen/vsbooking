@@ -5,6 +5,7 @@ import { DateBlockProvider } from "@/context/DateBlockContext"
 import { PromotionProvider } from "@/context/PromotionContext"
 import { SettingsProvider } from "@/context/SettingsContext"
 import { TimeBlockProvider } from "@/context/TimeBlockContext"
+import AdminInAppAppointmentNotifier from "@/components/notifications/AdminInAppAppointmentNotifier"
 import { SessionProvider } from "next-auth/react"
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -14,7 +15,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <DateBlockProvider>
           <TimeBlockProvider>
             <PromotionProvider>
-              <AppointmentProvider>{children}</AppointmentProvider>
+              <AppointmentProvider>
+                <AdminInAppAppointmentNotifier />
+                {children}
+              </AppointmentProvider>
             </PromotionProvider>
           </TimeBlockProvider>
         </DateBlockProvider>

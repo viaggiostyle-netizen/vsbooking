@@ -167,6 +167,9 @@ export default function ConfirmationScreen({ groupId }: ConfirmationScreenProps)
             <p className="mt-2 text-[14px] font-medium tracking-[0.005em] text-[#0F172A] opacity-65 dark:text-[#F2F2F2] dark:opacity-65">
               Su turno ha sido confirmado, te esperamos.
             </p>
+            <p className="mt-2 text-[14px] font-medium tracking-[0.005em] text-[#0F172A] opacity-65 dark:text-[#F2F2F2] dark:opacity-65">
+              Cualquier consulta comunicate por WhatsApp.
+            </p>
             <button
               type="button"
               onClick={() => router.push("/")}

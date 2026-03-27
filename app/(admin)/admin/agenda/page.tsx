@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Calendar, ChevronLeft, ChevronRight, Check, UserX, EyeOff, XCircle } from "lucide-react"
 import AppointmentEditModal from "@/components/admin/AppointmentEditModal"
 import AppointmentCreateModal from "@/components/admin/AppointmentCreateModal"
@@ -26,6 +27,7 @@ import { fetchOrganizationFromSupabase } from "@/lib/supabase/organization"
 import { patchAppointmentInSupabase, upsertAppointmentsToSupabase } from "@/lib/supabase/appointments"
 import { getAvailableSlots, isDateBlocked, timeToMinutes } from "@/lib/scheduleUtils"
 import { formatMoney } from "@/lib/utils"
+import { dateKeyToDate } from "@/lib/date"
 import type { Appointment } from "@/types/Appointment"
 import type { WorkBlock } from "@/types/WorkBlock"
 
@@ -57,6 +59,7 @@ const STATUS_LEGEND = [
 ]
 
 export default function AgendaPage() {
+  const searchParams = useSearchParams()
   const {
     appointments,
     setAppointments,
@@ -95,6 +98,16 @@ export default function AgendaPage() {
   const [appointmentActionError, setAppointmentActionError] = useState("")
   const [isSavingAction, setIsSavingAction] = useState(false)
   const [hasMounted, setHasMounted] = useState(false)
+  const highlightedDateKey = searchParams.get("date") ?? ""
+  const highlightedTime = searchParams.get("time") ?? ""
+  const highlightedAppointmentKey =
+    highlightedDateKey && highlightedTime ? `${highlightedDateKey}-${highlightedTime}` : ""
+  const highlightedDateLabel = useMemo(() => {
+    if (!highlightedDateKey) return ""
+    const parsed = dateKeyToDate(highlightedDateKey)
+    if (Number.isNaN(parsed.getTime())) return ""
+    return formatLongDate(parsed)
+  }, [highlightedDateKey])
 
   const weekStart = useMemo(() => getWeekStartMonday(selectedDate), [selectedDate])
   const weekDays = useMemo(
@@ -428,6 +441,16 @@ export default function AgendaPage() {
   }, [openCreateTurnModal])
 
   useEffect(() => {
+    if (!hasMounted || !highlightedDateKey) return
+
+    const parsed = dateKeyToDate(highlightedDateKey)
+    if (Number.isNaN(parsed.getTime())) return
+
+    setSelectedDate(parsed)
+    setMonthCursor(new Date(parsed.getFullYear(), parsed.getMonth(), 1))
+  }, [hasMounted, highlightedDateKey])
+
+  useEffect(() => {
     if (!hasMounted) return
     const params = new URLSearchParams(window.location.search)
     if (params.get("nuevo") !== "1") return
@@ -438,6 +461,29 @@ export default function AgendaPage() {
     const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname
     window.history.replaceState({}, "", nextUrl)
   }, [hasMounted, openCreateTurnModal])
+
+  useEffect(() => {
+    if (!hasMounted || !highlightedAppointmentKey) return
+    if (highlightedDateKey !== toDateKey(selectedDate)) return
+
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLElement>(
+        `[data-highlight-key="${highlightedAppointmentKey}"]`
+      )
+
+      target?.scrollIntoView({ behavior: "smooth", block: "center" })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+    }
+  }, [
+    appointmentsForSelectedDate,
+    hasMounted,
+    highlightedAppointmentKey,
+    highlightedDateKey,
+    selectedDate,
+  ])
 
   useEffect(() => {
     if (!selectedAppointment) return
@@ -518,6 +564,17 @@ export default function AgendaPage() {
                 Agenda
               </h2>
               <p className="mt-1 text-[13px] text-muted">{displayedRange}</p>
+              {highlightedDateLabel ? (
+                <div className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--accent)_28%,transparent)] bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] px-3 py-1.5 text-[12px] font-semibold text-foreground">
+                  <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--accent)]">
+                    Foco
+                  </span>
+                  <span>
+                    {highlightedDateLabel}
+                    {highlightedTime ? ` - ${highlightedTime} hs` : ""}
+                  </span>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -603,6 +660,7 @@ export default function AgendaPage() {
         ) : (
           appointmentsForSelectedDate.map((item) => {
             const canonical = toCanonicalAppointmentStatus(item.status)
+            const isHighlighted = highlightedAppointmentKey === `${item.date}-${item.time}`
             const statusInfo = canonical === "completed"
               ? { label: "Completado", chipClass: "bg-[#05AA72]/10 text-[#05AA72] ring-[#05AA72]/20" }
               : canonical === "no_show_with_notice"
@@ -618,8 +676,12 @@ export default function AgendaPage() {
             return (
               <div
                 key={item.id}
+                data-highlight-key={`${item.date}-${item.time}`}
                 onClick={() => openAppointmentModal(item)}
-                className="group relative overflow-hidden rounded-[26px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl active:scale-[0.98] transition-all"
+                className={`group relative overflow-hidden rounded-[26px] border border-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_96%,transparent),color-mix(in_srgb,var(--background)_88%,transparent))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl active:scale-[0.98] transition-all ${isHighlighted
+                    ? "ring-2 ring-[var(--accent)] shadow-[0_18px_40px_rgba(15,23,42,0.16)]"
+                    : ""
+                  }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -743,12 +805,17 @@ export default function AgendaPage() {
                         <div className="flex h-full flex-col gap-1">
                           {dayTurns.map((item) => {
                             const style = getAppointmentStyle(item.status)
+                            const isHighlighted = highlightedAppointmentKey === `${item.date}-${item.time}`
                             return (
                               <button
                                 key={item.id}
                                 type="button"
+                                data-highlight-key={`${item.date}-${item.time}`}
                                 onClick={() => openAppointmentModal(item)}
-                                className={`w-full rounded-[15px] border px-2 py-1.5 text-left shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-[10px] transition-all duration-300 ease-out hover:-translate-y-[1px] active:scale-[0.99] ${style.containerClass}`}
+                                className={`w-full rounded-[15px] border px-2 py-1.5 text-left shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-[10px] transition-all duration-300 ease-out hover:-translate-y-[1px] active:scale-[0.99] ${style.containerClass} ${isHighlighted
+                                    ? "ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-background"
+                                    : ""
+                                  }`}
                               >
                                 <p className={`truncate text-[10px] font-semibold ${style.textClass}`}>
                                   {item.clientName}

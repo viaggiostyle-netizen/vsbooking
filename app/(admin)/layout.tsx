@@ -252,7 +252,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         const badge = payload.data?.badge || "/icons/notification-badge.svg"
 
         try {
-          new Notification(resolvedTitle, { body: resolvedBody, icon, badge })
+          void resolvedTitle
+          void resolvedBody
+          void icon
+          void badge
+          return
         } catch {
           return
         }

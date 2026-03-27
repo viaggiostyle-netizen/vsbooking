@@ -1,25 +1,18 @@
 "use client"
 
-import { AlertCircle, Info, TriangleAlert, X } from "lucide-react"
+import { Info, TriangleAlert, X } from "lucide-react"
 import {
   Slide,
   ToastContainer,
   type CloseButtonProps,
   type IconProps,
 } from "react-toastify"
+import { ADMIN_APPOINTMENT_TOAST_CONTAINER_ID } from "@/components/ui/toast-constants"
 import "react-toastify/dist/ReactToastify.css"
 
 function AppToastIcon({ type }: IconProps) {
-  if (type === "success") {
+  if (type === "success" || type === "error") {
     return null
-  }
-
-  if (type === "error") {
-    return (
-      <span className="app-toast-icon app-toast-icon--error" aria-hidden>
-        <AlertCircle size={18} />
-      </span>
-    )
   }
 
   if (type === "warning") {
@@ -55,22 +48,41 @@ function AppToastCloseButton({ closeToast }: CloseButtonProps) {
 
 export function AppToastProvider() {
   return (
-    <ToastContainer
-      position="top-right"
-      autoClose={3400}
-      hideProgressBar={false}
-      newestOnTop
-      closeOnClick
-      pauseOnHover
-      draggable
-      pauseOnFocusLoss={false}
-      theme="dark"
-      transition={Slide}
-      limit={4}
-      closeButton={AppToastCloseButton}
-      icon={AppToastIcon}
-      toastClassName={(context) => `app-toast app-toast--${context?.type ?? "default"}`}
-      progressClassName={(context) => `app-toast-progress app-toast-progress--${context?.type ?? "default"}`}
-    />
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3400}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        pauseOnFocusLoss={false}
+        theme="dark"
+        transition={Slide}
+        limit={4}
+        closeButton={AppToastCloseButton}
+        icon={AppToastIcon}
+        toastClassName={(context) => `app-toast app-toast--${context?.type ?? "default"}`}
+        progressClassName={(context) => `app-toast-progress app-toast-progress--${context?.type ?? "default"}`}
+      />
+      <ToastContainer
+        containerId={ADMIN_APPOINTMENT_TOAST_CONTAINER_ID}
+        position="top-right"
+        autoClose={6400}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable={false}
+        pauseOnFocusLoss={false}
+        theme="dark"
+        transition={Slide}
+        limit={4}
+        closeButton={AppToastCloseButton}
+        icon={false}
+        toastClassName={(context) => `app-live-toast app-live-toast--${context?.type ?? "default"}`}
+      />
+    </>
   )
 }

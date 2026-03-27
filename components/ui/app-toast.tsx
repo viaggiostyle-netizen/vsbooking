@@ -1,12 +1,18 @@
 "use client"
 
-import { Check } from "lucide-react"
+import { Check, TriangleAlert, X } from "lucide-react"
 import { toast, type ToastOptions } from "react-toastify"
+import { ADMIN_APPOINTMENT_TOAST_CONTAINER_ID } from "@/components/ui/toast-constants"
 
 type AppToastVariant = "success" | "error" | "info" | "warning"
+type AdminAppointmentToastVariant = "success" | "warning" | "error"
 
 type AppToastOptions = ToastOptions & {
   title?: string
+}
+
+type AdminAppointmentToastOptions = Omit<ToastOptions, "containerId"> & {
+  title: string
 }
 
 function getDefaultTitle(variant: AppToastVariant) {
@@ -31,15 +37,17 @@ function AppToastContent({
   title: string
   message: string
 }) {
-  if (variant === "success") {
+  if (variant === "success" || variant === "error") {
     return (
-      <div className="app-toast-success">
-        <span className="app-toast-success__badge" aria-hidden>
-          <Check size={26} />
+      <div className={`app-toast-featured app-toast-featured--${variant}`}>
+        <span className="app-toast-featured__badge" aria-hidden>
+          {variant === "success" ? <Check size={24} /> : <X size={24} />}
         </span>
-        <div className="app-toast-success__copy">
-          <span className="app-toast-success__title">{title}</span>
-          <span className="app-toast-success__message">{message}</span>
+        <span className="app-toast-featured__accent" aria-hidden />
+        <span className="app-toast-featured__dots" aria-hidden />
+        <div className="app-toast-featured__copy">
+          <span className="app-toast-featured__title">{title}</span>
+          <span className="app-toast-featured__message">{message}</span>
         </div>
       </div>
     )
@@ -49,6 +57,34 @@ function AppToastContent({
     <div className="app-toast-content">
       <span className="app-toast-title">{title}</span>
       <span className="app-toast-message">{message}</span>
+    </div>
+  )
+}
+
+function AdminAppointmentToastContent({
+  variant,
+  title,
+  message,
+}: {
+  variant: AdminAppointmentToastVariant
+  title: string
+  message: string
+}) {
+  return (
+    <div className="app-live-toast-card">
+      <span className="app-live-toast-card__icon" aria-hidden>
+        {variant === "success" ? (
+          <Check size={24} />
+        ) : variant === "warning" ? (
+          <TriangleAlert size={24} />
+        ) : (
+          <X size={24} />
+        )}
+      </span>
+      <div className="app-live-toast-card__copy">
+        <span className="app-live-toast-card__title">{title}</span>
+        <span className="app-live-toast-card__message">{message}</span>
+      </div>
     </div>
   )
 }
@@ -66,6 +102,30 @@ function showToast(variant: AppToastVariant, message: string, options: AppToastO
       return toast.warning(content, toastOptions)
     default:
       return toast.info(content, toastOptions)
+  }
+}
+
+export function showAdminAppointmentEventToast(
+  variant: AdminAppointmentToastVariant,
+  message: string,
+  options: AdminAppointmentToastOptions
+) {
+  const { title, ...toastOptions } = options
+  const content = (
+    <AdminAppointmentToastContent variant={variant} title={title} message={message} />
+  )
+  const baseOptions = {
+    containerId: ADMIN_APPOINTMENT_TOAST_CONTAINER_ID,
+    ...toastOptions,
+  }
+
+  switch (variant) {
+    case "success":
+      return toast.success(content, baseOptions)
+    case "warning":
+      return toast.warning(content, baseOptions)
+    default:
+      return toast.error(content, baseOptions)
   }
 }
 
