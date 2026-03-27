@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Calendar, ChevronLeft, ChevronRight, Check, UserX, EyeOff, XCircle } from "lucide-react"
 import AppointmentEditModal from "@/components/admin/AppointmentEditModal"
@@ -58,7 +58,7 @@ const STATUS_LEGEND = [
   },
 ]
 
-export default function AgendaPage() {
+function AgendaPageContent() {
   const searchParams = useSearchParams()
   const {
     appointments,
@@ -925,6 +925,20 @@ export default function AgendaPage() {
         </div>
       )}
     </section>
+  )
+}
+
+export default function AgendaPage() {
+  return (
+    <Suspense
+      fallback={
+        <section className="mx-auto w-full max-w-[1200px] px-6 py-12 text-center">
+          <p className="text-muted italic animate-pulse">Cargando agenda...</p>
+        </section>
+      }
+    >
+      <AgendaPageContent />
+    </Suspense>
   )
 }
 
