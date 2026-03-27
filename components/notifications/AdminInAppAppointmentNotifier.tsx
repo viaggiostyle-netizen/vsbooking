@@ -1,20 +1,23 @@
 "use client"
 
 import { useEffect } from "react"
-import type { MessagePayload } from "firebase/messaging"
 import { useRouter } from "next/navigation"
 import { showAdminAppointmentEventToast } from "@/components/ui/app-toast"
 import { useAppointments } from "@/context/AppointmentContext"
-import { formatShortDateWithDay, getTodayDateKeyArgentina } from "@/lib/date"
-import { listenAdminForegroundMessages } from "@/lib/firebase/client"
-import { fetchAppointmentsFromSupabase } from "@/lib/supabase/appointments"
-import { useAppointmentsStore } from "@/stores/useAppointmentsStore"
 import { useWhitelistedAdmin } from "@/hooks/useWhitelistedAdmin"
+import { formatShortDateWithDay, getTodayDateKeyArgentina } from "@/lib/date"
+import { consumeLocalAppointmentMutation } from "@/lib/notifications/in-app-appointment-events"
+import { fetchAppointmentsFromSupabase } from "@/lib/supabase/appointments"
+import { getSupabaseClient } from "@/lib/supabase/client"
+import { useAppointmentsStore } from "@/stores/useAppointmentsStore"
+import type { Appointment } from "@/types/Appointment"
 
 type LiveEventType = "created" | "modified" | "cancelled"
 type LiveToastVariant = "success" | "warning" | "error"
 
 type ParsedAppointmentEvent = {
+  appointmentId: string
+  bookingGroupId: string
   eventType: LiveEventType
   variant: LiveToastVariant
   title: string
@@ -24,12 +27,7 @@ type ParsedAppointmentEvent = {
   toastId: string
 }
 
-const CREATED_BODY_REGEX =
-  /^(?<client>.+?) reservo (?<service>.+?) para el (?<date>\d{4}-\d{2}-\d{2}) a las (?<time>\d{2}:\d{2})$/i
-const MODIFIED_BODY_REGEX =
-  /^(?<client>.+?) cambio su turno de (?<previousDate>\d{4}-\d{2}-\d{2}) (?<previousTime>\d{2}:\d{2}) al (?<date>\d{4}-\d{2}-\d{2}) (?<time>\d{2}:\d{2})$/i
-const CANCELLED_BODY_REGEX =
-  /^(?<client>.+?) cancelo su turno de (?<service>.+?) el (?<date>\d{4}-\d{2}-\d{2}) a las (?<time>\d{2}:\d{2})$/i
+const POLL_INTERVAL_MS = 4_000
 
 export default function AdminInAppAppointmentNotifier() {
   const router = useRouter()
@@ -40,150 +38,266 @@ export default function AdminInAppAppointmentNotifier() {
   useEffect(() => {
     if (status !== "authenticated" || !isWhitelistedAdmin) return
 
-    let active = true
-    let unsubscribe: (() => void) | null = null
+    const supabase = getSupabaseClient()
 
-    async function syncAppointments() {
-      const remote = await fetchAppointmentsFromSupabase()
-      if (!active || !remote) return
+    let active = true
+    let initialized = false
+    let syncing = false
+    let syncQueued = false
+    let previousAppointments: Appointment[] = []
+    let pollTimer: ReturnType<typeof window.setInterval> | null = null
+    let unsubscribeVisibility: (() => void) | null = null
+    let removeChannel: (() => void) | null = null
+
+    function syncAppointments(remote: Appointment[]) {
       setAppointments(remote)
       replaceAppointments(remote)
     }
 
     function handleToastClick(event: ParsedAppointmentEvent) {
-      const destination = resolveAppointmentDestination(event)
-      router.push(destination)
+      router.push(resolveAppointmentDestination(event))
     }
 
-    void (async () => {
-      const stop = await listenAdminForegroundMessages((payload) => {
-        if (!active) return
-        if (typeof document !== "undefined" && document.visibilityState !== "visible") return
-
-        const event = parseAppointmentEventPayload(payload)
-        if (!event) return
-
-        void syncAppointments()
-        showAdminAppointmentEventToast(event.variant, event.message, {
-          title: event.title,
-          toastId: event.toastId,
-          onClick: () => handleToastClick(event),
+    function showToast(event: ParsedAppointmentEvent) {
+      if (
+        consumeLocalAppointmentMutation({
+          eventType: event.eventType,
+          appointmentId: event.appointmentId,
+          bookingGroupId: event.bookingGroupId,
+          date: event.date,
+          time: event.time,
         })
-      })
-
-      if (!active) {
-        stop?.()
+      ) {
         return
       }
 
-      unsubscribe = stop
-    })()
+      showAdminAppointmentEventToast(event.variant, event.message, {
+        title: event.title,
+        toastId: event.toastId,
+        onClick: () => handleToastClick(event),
+      })
+    }
+
+    function applyRemoteSnapshot(remote: Appointment[]) {
+      if (!active) return
+
+      if (!initialized) {
+        initialized = true
+        previousAppointments = remote
+        syncAppointments(remote)
+        return
+      }
+
+      if (!haveAppointmentsChanged(previousAppointments, remote)) return
+
+      const events = collectAppointmentEvents(previousAppointments, remote)
+      previousAppointments = remote
+      syncAppointments(remote)
+
+      if (typeof document === "undefined" || document.visibilityState !== "visible") return
+
+      events.forEach((event) => {
+        showToast(event)
+      })
+    }
+
+    async function pullLatestAppointments() {
+      if (syncing) {
+        syncQueued = true
+        return
+      }
+
+      syncing = true
+
+      try {
+        do {
+          syncQueued = false
+          const remote = await fetchAppointmentsFromSupabase()
+          if (!active || !remote) return
+          applyRemoteSnapshot(remote)
+        } while (active && syncQueued)
+      } finally {
+        syncing = false
+      }
+    }
+
+    void pullLatestAppointments()
+
+    if (supabase) {
+      const channel = supabase
+        .channel("admin-in-app-appointments")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "bookings",
+          },
+          () => {
+            void pullLatestAppointments()
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "bookings",
+          },
+          () => {
+            void pullLatestAppointments()
+          }
+        )
+        .subscribe()
+
+      removeChannel = () => {
+        void supabase.removeChannel(channel)
+      }
+    }
+
+    if (typeof document !== "undefined") {
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "visible") {
+          void pullLatestAppointments()
+        }
+      }
+
+      document.addEventListener("visibilitychange", handleVisibilityChange)
+      unsubscribeVisibility = () => {
+        document.removeEventListener("visibilitychange", handleVisibilityChange)
+      }
+    }
+
+    pollTimer = window.setInterval(() => {
+      void pullLatestAppointments()
+    }, POLL_INTERVAL_MS)
 
     return () => {
       active = false
-      unsubscribe?.()
+      if (pollTimer) window.clearInterval(pollTimer)
+      unsubscribeVisibility?.()
+      removeChannel?.()
     }
   }, [isWhitelistedAdmin, replaceAppointments, router, setAppointments, status])
 
   return null
 }
 
-function parseAppointmentEventPayload(payload: MessagePayload): ParsedAppointmentEvent | null {
-  const eventType = normalizeEventType(payload.data?.eventType)
-  if (!eventType) return null
+function collectAppointmentEvents(
+  previousAppointments: Appointment[],
+  nextAppointments: Appointment[]
+) {
+  const previousById = new Map(previousAppointments.map((appointment) => [appointment.id, appointment]))
+  const createdByGroup = new Map<string, Appointment>()
+  const changedEvents: ParsedAppointmentEvent[] = []
 
-  const body = getPayloadBody(payload)
-  const toastId = payload.messageId ?? `${eventType}-${body}`
+  nextAppointments.forEach((appointment) => {
+    const previous = previousById.get(appointment.id)
 
-  switch (eventType) {
-    case "created":
-      return buildCreatedEvent(body, toastId)
-    case "modified":
-      return buildModifiedEvent(body, toastId)
-    case "cancelled":
-      return buildCancelledEvent(body, toastId)
-    default:
-      return null
-  }
+    if (!previous) {
+      if (appointment.status === "cancelled") return
+
+      const groupKey = appointment.bookingGroupId || appointment.id
+      const existing = createdByGroup.get(groupKey)
+
+      if (!existing || compareAppointmentMoments(appointment, existing) < 0) {
+        createdByGroup.set(groupKey, appointment)
+      }
+
+      return
+    }
+
+    if (previous.status !== "cancelled" && appointment.status === "cancelled") {
+      changedEvents.push(buildCancelledEvent(appointment))
+      return
+    }
+
+    if (
+      appointment.status !== "cancelled" &&
+      (previous.date !== appointment.date || previous.time !== appointment.time)
+    ) {
+      changedEvents.push(buildModifiedEvent(appointment))
+    }
+  })
+
+  return [
+    ...[...createdByGroup.values()].map((appointment) => buildCreatedEvent(appointment)),
+    ...changedEvents,
+  ]
 }
 
-function buildCreatedEvent(body: string, toastId: string): ParsedAppointmentEvent {
-  const match = body.match(CREATED_BODY_REGEX)
-  const client = trimNamedCapture(match, "client")
-  const service = trimNamedCapture(match, "service")
-  const date = trimNamedCapture(match, "date")
-  const time = trimNamedCapture(match, "time")
-  const dateLabel = date ? formatShortDateWithDay(date) : "la fecha indicada"
+function buildCreatedEvent(appointment: Appointment): ParsedAppointmentEvent {
+  const dateLabel = formatShortDateWithDay(appointment.date)
 
   return {
+    appointmentId: appointment.id,
+    bookingGroupId: appointment.bookingGroupId || appointment.id,
     eventType: "created",
     variant: "success",
     title: "Success!",
-    message:
-      client && service && date && time
-        ? `${client} agendo ${service} para ${dateLabel} a las ${time}.`
-        : body || "Un cliente agendo una cita.",
-    date: date || undefined,
-    time: time || undefined,
-    toastId,
+    message: `${appointment.clientName} agendo una cita para ${dateLabel} a las ${appointment.time}.`,
+    date: appointment.date,
+    time: appointment.time,
+    toastId: `booking-created-${appointment.bookingGroupId || appointment.id}`,
   }
 }
 
-function buildModifiedEvent(body: string, toastId: string): ParsedAppointmentEvent {
-  const match = body.match(MODIFIED_BODY_REGEX)
-  const client = trimNamedCapture(match, "client")
-  const date = trimNamedCapture(match, "date")
-  const time = trimNamedCapture(match, "time")
-  const dateLabel = date ? formatShortDateWithDay(date) : "la fecha indicada"
+function buildModifiedEvent(appointment: Appointment): ParsedAppointmentEvent {
+  const dateLabel = formatShortDateWithDay(appointment.date)
 
   return {
+    appointmentId: appointment.id,
+    bookingGroupId: appointment.bookingGroupId || appointment.id,
     eventType: "modified",
     variant: "warning",
     title: "Warning!",
-    message:
-      client && date && time
-        ? `${client} reprogramo su cita para ${dateLabel} a las ${time}.`
-        : body || "Un cliente modifico su cita.",
-    date: date || undefined,
-    time: time || undefined,
-    toastId,
+    message: `${appointment.clientName} reprogramo su cita para ${dateLabel} a las ${appointment.time}.`,
+    date: appointment.date,
+    time: appointment.time,
+    toastId: `booking-modified-${appointment.id}-${appointment.date}-${appointment.time}`,
   }
 }
 
-function buildCancelledEvent(body: string, toastId: string): ParsedAppointmentEvent {
-  const match = body.match(CANCELLED_BODY_REGEX)
-  const client = trimNamedCapture(match, "client")
-  const service = trimNamedCapture(match, "service")
-  const date = trimNamedCapture(match, "date")
-  const time = trimNamedCapture(match, "time")
-  const dateLabel = date ? formatShortDateWithDay(date) : "la fecha indicada"
+function buildCancelledEvent(appointment: Appointment): ParsedAppointmentEvent {
+  const dateLabel = formatShortDateWithDay(appointment.date)
 
   return {
+    appointmentId: appointment.id,
+    bookingGroupId: appointment.bookingGroupId || appointment.id,
     eventType: "cancelled",
     variant: "error",
-    title: "Cancelada",
-    message:
-      client && date && time
-        ? `${client} cancelo su cita${service ? ` de ${service}` : ""} para ${dateLabel} a las ${time}.`
-        : body || "Un cliente cancelo su cita.",
-    date: date || undefined,
-    time: time || undefined,
-    toastId,
+    title: "Cancelacion",
+    message: `${appointment.clientName} cancelo su cita para ${dateLabel} a las ${appointment.time}.`,
+    date: appointment.date,
+    time: appointment.time,
+    toastId: `booking-cancelled-${appointment.id}-${appointment.date}-${appointment.time}`,
   }
 }
 
-function getPayloadBody(payload: MessagePayload) {
-  return payload.notification?.body?.trim() || payload.data?.body?.trim() || ""
+function haveAppointmentsChanged(previousAppointments: Appointment[], nextAppointments: Appointment[]) {
+  if (previousAppointments.length !== nextAppointments.length) return true
+
+  const previousById = new Map(previousAppointments.map((appointment) => [appointment.id, appointment]))
+
+  return nextAppointments.some((appointment) => {
+    const previous = previousById.get(appointment.id)
+    if (!previous) return true
+
+    return (
+      previous.bookingGroupId !== appointment.bookingGroupId ||
+      previous.clientName !== appointment.clientName ||
+      previous.clientPhone !== appointment.clientPhone ||
+      previous.service !== appointment.service ||
+      previous.date !== appointment.date ||
+      previous.time !== appointment.time ||
+      previous.status !== appointment.status ||
+      previous.finalPrice !== appointment.finalPrice
+    )
+  })
 }
 
-function normalizeEventType(value: string | undefined): LiveEventType | null {
-  if (value === "created" || value === "modified" || value === "cancelled") return value
-  return null
-}
-
-function trimNamedCapture(match: RegExpMatchArray | null, key: string) {
-  const value = match?.groups?.[key]
-  return typeof value === "string" ? value.trim() : ""
+function compareAppointmentMoments(left: Appointment, right: Appointment) {
+  return `${left.date} ${left.time}`.localeCompare(`${right.date} ${right.time}`)
 }
 
 function resolveAppointmentDestination(event: ParsedAppointmentEvent) {

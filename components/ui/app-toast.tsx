@@ -1,6 +1,5 @@
 "use client"
 
-import { Check, TriangleAlert, X } from "lucide-react"
 import { toast, type ToastOptions } from "react-toastify"
 import { ADMIN_APPOINTMENT_TOAST_CONTAINER_ID } from "@/components/ui/toast-constants"
 
@@ -37,24 +36,10 @@ function AppToastContent({
   title: string
   message: string
 }) {
-  if (variant === "success" || variant === "error") {
-    return (
-      <div className={`app-toast-featured app-toast-featured--${variant}`}>
-        <span className="app-toast-featured__badge" aria-hidden>
-          {variant === "success" ? <Check size={24} /> : <X size={24} />}
-        </span>
-        <span className="app-toast-featured__accent" aria-hidden />
-        <span className="app-toast-featured__dots" aria-hidden />
-        <div className="app-toast-featured__copy">
-          <span className="app-toast-featured__title">{title}</span>
-          <span className="app-toast-featured__message">{message}</span>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="app-toast-content">
+    <div
+      className={`app-toast-content ${variant === "success" || variant === "error" ? "app-toast-content--featured" : ""}`}
+    >
       <span className="app-toast-title">{title}</span>
       <span className="app-toast-message">{message}</span>
     </div>
@@ -62,29 +47,16 @@ function AppToastContent({
 }
 
 function AdminAppointmentToastContent({
-  variant,
   title,
   message,
 }: {
-  variant: AdminAppointmentToastVariant
   title: string
   message: string
 }) {
   return (
     <div className="app-live-toast-card">
-      <span className="app-live-toast-card__icon" aria-hidden>
-        {variant === "success" ? (
-          <Check size={24} />
-        ) : variant === "warning" ? (
-          <TriangleAlert size={24} />
-        ) : (
-          <X size={24} />
-        )}
-      </span>
-      <div className="app-live-toast-card__copy">
-        <span className="app-live-toast-card__title">{title}</span>
-        <span className="app-live-toast-card__message">{message}</span>
-      </div>
+      <span className="app-live-toast-card__title">{title}</span>
+      <span className="app-live-toast-card__message">{message}</span>
     </div>
   )
 }
@@ -111,9 +83,7 @@ export function showAdminAppointmentEventToast(
   options: AdminAppointmentToastOptions
 ) {
   const { title, ...toastOptions } = options
-  const content = (
-    <AdminAppointmentToastContent variant={variant} title={title} message={message} />
-  )
+  const content = <AdminAppointmentToastContent title={title} message={message} />
   const baseOptions = {
     containerId: ADMIN_APPOINTMENT_TOAST_CONTAINER_ID,
     ...toastOptions,

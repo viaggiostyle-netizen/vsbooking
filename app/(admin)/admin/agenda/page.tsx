@@ -28,6 +28,7 @@ import { patchAppointmentInSupabase, upsertAppointmentsToSupabase } from "@/lib/
 import { getAvailableSlots, isDateBlocked, timeToMinutes } from "@/lib/scheduleUtils"
 import { formatMoney } from "@/lib/utils"
 import { dateKeyToDate } from "@/lib/date"
+import { rememberLocalAppointmentMutation } from "@/lib/notifications/in-app-appointment-events"
 import type { Appointment } from "@/types/Appointment"
 import type { WorkBlock } from "@/types/WorkBlock"
 
@@ -277,6 +278,13 @@ function AgendaPageContent() {
 
     try {
       if (status === "cancelled") {
+        rememberLocalAppointmentMutation({
+          eventType: "cancelled",
+          appointmentId: selectedAppointment.id,
+          bookingGroupId: selectedAppointment.bookingGroupId,
+          date: selectedAppointment.date,
+          time: selectedAppointment.time,
+        })
         await cancelAppointment(selectedAppointment.id)
       } else {
         await updateAppointmentStatus(selectedAppointment.id, status)
@@ -364,6 +372,13 @@ function AgendaPageContent() {
 
     setIsSavingAction(true)
     setAppointmentActionError("")
+    rememberLocalAppointmentMutation({
+      eventType: "modified",
+      appointmentId: selectedAppointment.id,
+      bookingGroupId: selectedAppointment.bookingGroupId,
+      date: editDateKey,
+      time: editTime,
+    })
     updateAppointment(selectedAppointment.id, patch)
     setSelectedAppointment((current) => (current ? { ...current, ...patch } : current))
 
@@ -398,6 +413,17 @@ function AgendaPageContent() {
 
     const channel = supabase
       .channel("appointments-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bookings",
+        },
+        () => {
+          loadAppointments()
+        }
+      )
       .on(
         "postgres_changes",
         {
@@ -522,6 +548,13 @@ function AgendaPageContent() {
 
     setIsSavingAction(true)
     try {
+      rememberLocalAppointmentMutation({
+        eventType: "created",
+        appointmentId: newAppointment.id,
+        bookingGroupId: newAppointment.bookingGroupId,
+        date: newAppointment.date,
+        time: newAppointment.time,
+      })
       createAppointment(newAppointment)
       await upsertAppointmentsToSupabase([newAppointment])
       await refreshAgendaData()

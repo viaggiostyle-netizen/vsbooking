@@ -8,6 +8,7 @@ import {
   patchAppointmentInSupabase,
   upsertAppointmentsToSupabase,
 } from "@/lib/supabase/appointments"
+import { rememberLocalAppointmentMutation } from "@/lib/notifications/in-app-appointment-events"
 import { createId } from "@/lib/utils"
 import type { Appointment, BookingPayload } from "@/types/Appointment"
 import type { Promotion } from "@/types/promotion"
@@ -106,6 +107,15 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
     })
 
     const next = [...get().appointments, ...created]
+    created.forEach((appointment) => {
+      rememberLocalAppointmentMutation({
+        eventType: "created",
+        appointmentId: appointment.id,
+        bookingGroupId: appointment.bookingGroupId,
+        date: appointment.date,
+        time: appointment.time,
+      })
+    })
     persistPublicAppointments(next)
     syncWithAdminAppointments(next)
     set({
@@ -135,6 +145,15 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
   },
   cancelAppointment: (id) => {
     const current = get().appointments.find((appointment) => appointment.id === id)
+    if (current) {
+      rememberLocalAppointmentMutation({
+        eventType: "cancelled",
+        appointmentId: current.id,
+        bookingGroupId: current.bookingGroupId,
+        date: current.date,
+        time: current.time,
+      })
+    }
     const next = get().appointments.map((appointment) =>
       appointment.id === id ? { ...appointment, status: "cancelled" as const } : appointment
     )
@@ -145,6 +164,15 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
   },
   modifyAppointment: (id, patch) => {
     const current = get().appointments.find((appointment) => appointment.id === id)
+    if (current) {
+      rememberLocalAppointmentMutation({
+        eventType: "modified",
+        appointmentId: current.id,
+        bookingGroupId: current.bookingGroupId,
+        date: patch.date,
+        time: patch.time,
+      })
+    }
     const next = get().appointments.map((appointment) =>
       appointment.id === id ? { ...appointment, date: patch.date, time: patch.time } : appointment
     )
