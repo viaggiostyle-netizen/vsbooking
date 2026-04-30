@@ -12,6 +12,7 @@ type AvailableArgs = {
   timeBlocks: TimeBlock[]
   appointments: Appointment[]
   now?: Date
+  ignoreAdvanceWindow?: boolean
 }
 
 export function generateTimeSlots(date: string, workBlocks: WorkBlock[]): string[] {
@@ -47,6 +48,7 @@ export function getAvailableSlots({
   timeBlocks,
   appointments,
   now = new Date(),
+  ignoreAdvanceWindow = false,
 }: AvailableArgs): string[] {
   if (isDateBlocked(date, dateBlocks)) return []
 
@@ -67,7 +69,9 @@ export function getAvailableSlots({
   return generated.filter((slot) => {
     if (isTimeBlocked(date, slot, timeBlocks)) return false
     if (isTimeBooked(date, slot, appointments)) return false
-    if (!passesAdvanceWindow(date, slot, now, settings.minAdvanceBooking)) return false
+    if (!ignoreAdvanceWindow && !passesAdvanceWindow(date, slot, now, settings.minAdvanceBooking)) {
+      return false
+    }
     return true
   })
 }

@@ -137,13 +137,14 @@ function AgendaPageContent() {
       !turnDate
         ? []
         : getAvailableSlots({
-          date: toDateKey(turnDate),
-          workBlocks: organizationWorkBlocks,
-          settings,
-          dateBlocks,
-          timeBlocks,
-          appointments,
-        }),
+            date: toDateKey(turnDate),
+            workBlocks: organizationWorkBlocks,
+            settings,
+            dateBlocks,
+            timeBlocks,
+            appointments,
+            ignoreAdvanceWindow: true,
+          }),
     [turnDate, organizationWorkBlocks, settings, dateBlocks, timeBlocks, appointments]
   )
 
@@ -878,7 +879,7 @@ function AgendaPageContent() {
         isDateBlocked={(dateKey) => {
           const parsedDate = dateFromDateKey(dateKey)
           if (!parsedDate) return true
-          return !isSelectableDate(parsedDate, minSelectableDate) || isDateBlocked(dateKey, dateBlocks)
+          return !isSelectableDate(parsedDate, MIN_DATE) || isDateBlocked(dateKey, dateBlocks)
         }}
         onSelectDate={(date) => {
           const parsed = dateFromDateKey(date)
