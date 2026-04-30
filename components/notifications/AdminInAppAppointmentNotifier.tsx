@@ -45,7 +45,7 @@ export default function AdminInAppAppointmentNotifier() {
     let syncing = false
     let syncQueued = false
     let previousAppointments: Appointment[] = []
-    let pollTimer: ReturnType<typeof window.setInterval> | null = null
+    let pollTimer: number | null = null
     let unsubscribeVisibility: (() => void) | null = null
     let removeChannel: (() => void) | null = null
 
