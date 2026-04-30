@@ -821,7 +821,31 @@ input {
 }
 
 .app-toast-content--featured {
-  gap: 0;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: center;
+}
+
+.app-toast-featured-icon {
+  grid-row: 1 / span 2;
+  display: grid;
+  height: 46px;
+  width: 46px;
+  place-items: center;
+  align-self: center;
+  border-radius: 16px;
+  color: #f5f5f5;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.app-toast-featured-icon--success {
+  background: color-mix(in srgb, #005e38 72%, white 10%);
+}
+
+.app-toast-featured-icon--error {
+  background: color-mix(in srgb, #851d41 82%, white 8%);
 }
 
 .app-toast-title {
@@ -857,10 +881,10 @@ input {
 
 .app-toast--success,
 .app-toast--error {
-  overflow: visible;
+  overflow: hidden;
   border: none;
   color: #f5f5f5;
-  box-shadow: none;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
 }
 
 .app-toast--success {
@@ -877,150 +901,26 @@ input {
 
 .app-toast--success .Toastify__toast-body,
 .app-toast--error .Toastify__toast-body {
-  min-height: 94px;
-  padding: 1.1rem 3.35rem 1rem 6.85rem;
+  min-height: 0;
+  padding: 1rem 3.25rem 1rem 1rem;
   display: block;
 }
 
 .app-toast--success::before,
-.app-toast--error::before {
-  content: "";
-  position: absolute;
-  width: 5.5rem;
-  height: 6rem;
-  --drop:
-    radial-gradient(circle at 64% 51%, var(--app-toast-clr) 0.45rem, #fff0 calc(0.45rem + 1px)),
-    radial-gradient(circle at 100% 100%, #fff0 0.9rem, var(--app-toast-clr) calc(0.9rem + 1px) 1.25rem, #fff0 calc(1.25rem + 1px) 100%),
-    radial-gradient(circle at 0% 0%, #fff0 0.9rem, var(--app-toast-clr) calc(0.9rem + 1px) 1.25rem, #fff0 calc(1.25rem + 1px) 100%),
-    radial-gradient(circle at 0% 120%, var(--app-toast-clr) 4rem, #fff0 calc(4rem + 1px));
-  background:
-    radial-gradient(circle at 22% 3.8rem, var(--app-toast-clr) 0.75rem, #fff0 calc(0.75rem + 1px)),
-    radial-gradient(circle at 95% 1.9rem, var(--app-toast-clr) 0.07rem, #fff0 calc(0.07rem + 1px)),
-    radial-gradient(circle at 80% 2.25rem, var(--app-toast-clr) 0.18rem, #fff0 calc(0.18rem + 1px)),
-    radial-gradient(circle at 80% 75%, var(--app-toast-clr) 0.35rem, #fff0 calc(0.35rem + 1px)),
-    radial-gradient(circle at 43% 2.3rem, var(--app-toast-clr) 0.07rem, #fff0 calc(0.07rem + 1px)),
-    radial-gradient(circle at 40% 1rem, var(--app-toast-clr) 0.12rem, #fff0 calc(0.12rem + 1px)),
-    radial-gradient(circle at 20% 1.5rem, var(--app-toast-clr) 0.25rem, #fff0 calc(0.25rem + 1px)),
-    var(--drop),
-    #f000;
-  background-repeat: no-repeat;
-  background-size:
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    100% 100%,
-    1.625rem 1.625rem,
-    1.625rem 1.625rem,
-    100% 100%,
-    100% 100%;
-  background-position:
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    calc(100% - 1.75rem) 2.85rem,
-    calc(100% - 1.75rem) 2.95rem,
-    0 0,
-    0 0;
-  bottom: 0;
-  left: 0;
-  z-index: 0;
-  border-radius: 0 0 0 2rem;
-}
-
+.app-toast--error::before,
 .app-toast--success::after,
 .app-toast--error::after {
-  content: "";
-  position: absolute;
-  width: 3.15rem;
-  height: 3.15rem;
-  background: var(--app-toast-clr);
-  top: -1.2rem;
-  left: 2.1rem;
-  border-radius: 3rem;
-  padding-top: 0.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.25rem;
-  box-sizing: border-box;
-  color: #f5f5f5;
-}
-
-.app-toast--success::after {
-  content: "L";
-  font-size: 1.7rem;
-  font-weight: bold;
-  padding-bottom: 0.5rem;
-  transform: rotateY(180deg) rotate(-38deg);
-  text-indent: 0.15rem;
-}
-
-.app-toast--error::after {
-  content: "+";
-  font-size: 3rem;
-  line-height: 1.2rem;
-  transform: rotate(45deg);
-}
-
-.app-toast--success::before {
-  --drop:
-    radial-gradient(circle at 65% 63%, var(--app-toast-clr) 0.425rem, #fff0 calc(0.425rem + 1px)),
-    radial-gradient(circle at 70% 125%, #fff0 1rem, var(--app-toast-clr) calc(1rem + 1px) 1.25rem, #fff0 calc(1.25rem + 1px) 100%),
-    radial-gradient(circle at 30% -25%, #fff0 1rem, var(--app-toast-clr) calc(1rem + 1px) 1.25rem, #fff0 calc(1.25rem + 1px) 100%),
-    radial-gradient(circle at 20% 120%, var(--app-toast-clr) 3.5rem, #fff0 calc(3.5rem + 1px));
-  background-position:
-    0 0.4rem,
-    -0.2rem 3.3rem,
-    0 0.4rem,
-    -2rem -1.5rem,
-    -0.8rem 0,
-    -1rem 0.4rem,
-    0 1.5rem,
-    1.2rem 0.4rem,
-    calc(100% - 0.75rem) 3.5rem,
-    calc(100% - 0.75rem) 3.75rem,
-    0 0,
-    0 0;
-}
-
-.app-toast--error::before {
-  --drop:
-    radial-gradient(circle at 65% 63%, var(--app-toast-clr) 0.425rem, #fff0 calc(0.425rem + 1px)),
-    radial-gradient(circle at 129% 36%, #fff0 1rem, var(--app-toast-clr) calc(1rem + 1px) 1.25rem, #fff0 calc(1.25rem + 1px) 100%),
-    radial-gradient(circle at -27% 25%, #fff0 1rem, var(--app-toast-clr) calc(1rem + 1px) 1.25rem, #fff0 calc(1.25rem + 1px) 100%),
-    radial-gradient(circle at 20% 120%, var(--app-toast-clr) 3.5rem, #fff0 calc(3.5rem + 1px));
-  background-position:
-    1.75rem 0.75rem,
-    -0.75rem 1.2rem,
-    -1.3rem 0.5rem,
-    -3.5rem -2.5rem,
-    -0.4rem 0,
-    2rem 1.25rem,
-    0.82rem 1.6rem,
-    0.5rem 1.65rem,
-    calc(100% - 2.99rem) 3.25rem,
-    calc(100% - 2.75rem) 3rem,
-    0 0,
-    0 0;
+  content: none;
 }
 
 .app-toast--success .app-toast-title,
 .app-toast--error .app-toast-title {
-  position: relative;
-  font-size: 1.35rem;
+  position: static;
+  font-size: 15px;
   margin: 0;
-  max-width: 100%;
-  line-height: 1.35rem;
-  font-weight: 300;
+  min-width: 0;
+  line-height: 1.2;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
   color: #f5f5f5;
@@ -1028,39 +928,30 @@ input {
 
 .app-toast--success .app-toast-title::before,
 .app-toast--error .app-toast-title::before {
-  border: 0.5rem solid #fff0;
-  width: 0;
-  height: 0;
-  position: absolute;
-  content: "";
-  left: -3.45rem;
-  border-top: 1rem solid var(--app-toast-clr);
-  border-left: 1rem solid var(--app-toast-clr);
-  top: -0.4em;
-  transform: rotate(-96deg) skewX(30deg);
-  border-radius: 0.5rem;
+  content: none;
 }
 
 .app-toast--success .app-toast-message,
 .app-toast--error .app-toast-message {
-  position: relative;
-  z-index: 1;
-  max-width: 24ch;
-  margin: 0.25rem 0 0;
-  font-size: 0.95rem;
-  font-weight: 400;
-  line-height: 1.2;
-  color: #f5f5f5;
+  position: static;
+  z-index: auto;
+  max-width: none;
+  margin: 0;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(245, 245, 245, 0.92);
 }
 
 .app-toast--success .app-toast-close,
 .app-toast--error .app-toast-close {
   top: 0.9rem;
-  right: 1.1rem;
-  height: 1.35rem;
-  width: 1.35rem;
-  border: none;
-  background: transparent;
+  right: 0.95rem;
+  height: 1.6rem;
+  width: 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.12);
   color: #f5f5f5;
   box-shadow: none;
 }
@@ -1326,18 +1217,18 @@ input {
 
   .app-toast--success .Toastify__toast-body,
   .app-toast--error .Toastify__toast-body {
-    min-height: 90px;
-    padding: 1rem 3rem 0.95rem 6.2rem;
+    min-height: 0;
+    padding: 0.95rem 3rem 0.95rem 0.95rem;
   }
 
   .app-toast--success .app-toast-title,
   .app-toast--error .app-toast-title {
-    font-size: 1.2rem;
+    font-size: 14px;
   }
 
   .app-toast--success .app-toast-message,
   .app-toast--error .app-toast-message {
-    font-size: 0.88rem;
+    font-size: 13px;
   }
 
   .app-live-toast .Toastify__toast-body {

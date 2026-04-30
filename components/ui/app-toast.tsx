@@ -1,5 +1,6 @@
 "use client"
 
+import { CircleAlert, CircleCheckBig } from "lucide-react"
 import { toast, type ToastOptions } from "react-toastify"
 import { ADMIN_APPOINTMENT_TOAST_CONTAINER_ID } from "@/components/ui/toast-constants"
 
@@ -36,10 +37,18 @@ function AppToastContent({
   title: string
   message: string
 }) {
+  const isFeatured = variant === "success" || variant === "error"
+
   return (
-    <div
-      className={`app-toast-content ${variant === "success" || variant === "error" ? "app-toast-content--featured" : ""}`}
-    >
+    <div className={`app-toast-content ${isFeatured ? "app-toast-content--featured" : ""}`}>
+      {isFeatured ? (
+        <span
+          className={`app-toast-featured-icon app-toast-featured-icon--${variant}`}
+          aria-hidden
+        >
+          {variant === "success" ? <CircleCheckBig size={21} /> : <CircleAlert size={21} />}
+        </span>
+      ) : null}
       <span className="app-toast-title">{title}</span>
       <span className="app-toast-message">{message}</span>
     </div>
