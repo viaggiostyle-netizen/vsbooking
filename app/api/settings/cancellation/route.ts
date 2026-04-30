@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       blockedMessage,
       whatsappContact,
     })
-    void logAdminAction({
+    await logAdminAction({
       action: "cancellation_policy_updated",
       actorEmail: auth.email,
       targetLabel: `${Math.floor(parsed)} horas de anticipacion - ${whatsappContact}`,

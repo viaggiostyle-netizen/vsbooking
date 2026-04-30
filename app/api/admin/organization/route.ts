@@ -147,7 +147,7 @@ export async function POST(req: Request) {
       )
     }
 
-    void logAdminAction({
+    await logAdminAction({
       action: "organization_updated",
       actorEmail: auth.email,
       targetLabel: `${data.services.length} servicios y ${countActiveScheduleDays(data)} dias activos`,

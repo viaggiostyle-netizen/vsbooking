@@ -21,6 +21,15 @@ export type AdminLogRecord = {
   createdAt: string
 }
 
+type AdminLogRow = Partial<{
+  action: string
+  actor_email: string
+  target_email: string
+  admin_email: string
+  target: string
+  created_at: string
+}>
+
 function normalizeBaseUrl(url: string) {
   return url.endsWith("/") ? url.slice(0, -1) : url
 }
@@ -42,16 +51,17 @@ export async function logAdminAction(payload: AdminLogPayload) {
   if (!config) return
 
   const { supabaseUrl, serviceRoleKey } = config
+  const baseHeaders = {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json",
+    Prefer: "return=minimal",
+  }
 
   try {
-    const response = await fetch(`${supabaseUrl}/rest/v1/admin_logs`, {
+    let response = await fetch(`${supabaseUrl}/rest/v1/admin_logs`, {
       method: "POST",
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
+      headers: baseHeaders,
       body: JSON.stringify([
         {
           action: payload.action,
@@ -64,6 +74,29 @@ export async function logAdminAction(payload: AdminLogPayload) {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "")
+
+      // Support legacy live schemas that use `admin_email` and `target`.
+      if (response.status === 400) {
+        response = await fetch(`${supabaseUrl}/rest/v1/admin_logs`, {
+          method: "POST",
+          headers: baseHeaders,
+          body: JSON.stringify([
+            {
+              action: payload.action,
+              admin_email: payload.actorEmail,
+              target: payload.targetLabel,
+            },
+          ]),
+          cache: "no-store",
+        })
+
+        if (response.ok) return
+
+        const fallbackErrorText = await response.text().catch(() => "")
+        console.error("Failed to log admin action", response.status, fallbackErrorText || errorText)
+        return
+      }
+
       console.error("Failed to log admin action", response.status, errorText)
     }
   } catch (error) {
@@ -80,7 +113,7 @@ export async function listAdminActions(options: { limit?: number } = {}): Promis
 
   try {
     const response = await fetch(
-      `${supabaseUrl}/rest/v1/admin_logs?select=action,actor_email,target_email,created_at&order=created_at.desc&limit=${limit}`,
+      `${supabaseUrl}/rest/v1/admin_logs?select=*&order=created_at.desc&limit=${limit}`,
       {
         method: "GET",
         headers: {
@@ -97,12 +130,7 @@ export async function listAdminActions(options: { limit?: number } = {}): Promis
       return []
     }
 
-    const rows = (await response.json()) as Array<{
-      action?: string
-      actor_email?: string
-      target_email?: string
-      created_at?: string
-    }>
+    const rows = (await response.json()) as AdminLogRow[]
 
     return (rows ?? [])
       .map((row) => normalizeAdminLogRow(row))
@@ -113,22 +141,28 @@ export async function listAdminActions(options: { limit?: number } = {}): Promis
   }
 }
 
-function normalizeAdminLogRow(
-  row: Partial<{
-    action: string
-    actor_email: string
-    target_email: string
-    created_at: string
-  }>
-): AdminLogRecord | null {
+function normalizeAdminLogRow(row: AdminLogRow): AdminLogRecord | null {
   if (!isAdminLogAction(row.action)) return null
-  if (typeof row.actor_email !== "string") return null
   if (typeof row.created_at !== "string") return null
+
+  const actorEmail =
+    typeof row.actor_email === "string"
+      ? row.actor_email
+      : typeof row.admin_email === "string"
+        ? row.admin_email
+        : ""
+
+  const targetLabel =
+    typeof row.target_email === "string"
+      ? row.target_email
+      : typeof row.target === "string"
+        ? row.target
+        : ""
 
   return {
     action: row.action,
-    actorEmail: row.actor_email,
-    targetLabel: typeof row.target_email === "string" ? row.target_email : "",
+    actorEmail: actorEmail || "Sistema",
+    targetLabel,
     createdAt: row.created_at,
   }
 }

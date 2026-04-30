@@ -240,7 +240,7 @@ export async function POST(req: Request) {
   if (admin && adminEmail) {
     const firstCreated = buildCreatedNotificationPayload(appointments)
     if (firstCreated) {
-      void logAdminAction({
+      await logAdminAction({
         action: "appointment_created",
         actorEmail: adminEmail,
         targetLabel: buildBookingActivityLabel(firstCreated),
@@ -368,7 +368,7 @@ export async function PATCH(req: Request) {
       typeof body.finalPrice === "number"
 
     if (statusChanged) {
-      void logAdminAction({
+      await logAdminAction({
         action: "appointment_status_updated",
         actorEmail: adminEmail,
         targetLabel: buildBookingActivityLabel({
@@ -380,7 +380,7 @@ export async function PATCH(req: Request) {
         }),
       })
     } else if (detailsChanged) {
-      void logAdminAction({
+      await logAdminAction({
         action: "appointment_updated",
         actorEmail: adminEmail,
         targetLabel: buildBookingActivityLabel({
@@ -486,7 +486,7 @@ export async function DELETE(req: Request) {
   }
 
   if (existingBooking) {
-    void logAdminAction({
+    await logAdminAction({
       action: "appointment_deleted",
       actorEmail: adminEmail,
       targetLabel: buildBookingActivityLabel({

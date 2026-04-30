@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 
     const admin = await insertAdmin(email)
 
-    void logAdminAction({
+    await logAdminAction({
       action: "admin_added",
       actorEmail: auth.email,
       targetLabel: admin.email,
@@ -112,7 +112,7 @@ export async function DELETE(req: Request) {
 
     await removeAdmin(id)
 
-    void logAdminAction({
+    await logAdminAction({
       action: "admin_removed",
       actorEmail: auth.email,
       targetLabel: normalizeEmail(targetAdmin.email),
