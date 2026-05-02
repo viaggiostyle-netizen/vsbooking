@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useMemo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -264,11 +264,11 @@ export default function HorariosPage() {
               </div>
 
               <div className="space-y-2 pt-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={blockSpecificTimes}
                     disabled={selectedSlots.length === 0}
-                    className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl text-[13px] font-bold transition-all active:scale-[0.98] ${selectedSlots.length > 0
+                    className={`flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl text-[11px] sm:text-[13px] font-bold transition-all active:scale-[0.98] ${selectedSlots.length > 0
                       ? "bg-[var(--accent)] text-white shadow-lg shadow-[rgba(37,99,235,0.22)] hover:bg-[var(--accent-strong)]"
                       : "bg-muted/10 text-muted opacity-50 cursor-not-allowed"
                       }`}
@@ -278,7 +278,7 @@ export default function HorariosPage() {
                   </button>
                   <button
                     onClick={blockAllTimes}
-                    className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-red-500/10 px-4 text-[13px] font-bold text-red-500 transition-all hover:bg-red-500/20 active:scale-[0.98]"
+                    className="flex h-11 items-center justify-center gap-1.5 rounded-2xl bg-red-500/10 px-4 text-[11px] sm:text-[13px] font-bold text-red-500 transition-all hover:bg-red-500/20 active:scale-[0.98]"
                   >
                     Bloquear Todo
                   </button>

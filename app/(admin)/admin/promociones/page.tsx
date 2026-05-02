@@ -68,10 +68,10 @@ export default function PromocionesPage() {
 
         <button
           onClick={openCreate}
-          className="button-primary !mt-0 inline-flex h-11 !w-auto items-center gap-2 px-5 text-[13px] font-bold"
+          className="button-primary !mt-0 inline-flex h-11 !w-auto items-center gap-1.5 px-4 md:px-5 text-[11px] md:text-[13px] font-bold whitespace-nowrap"
         >
-          <Plus size={16} />
-          Nueva promocion
+          <Plus size={14} />
+          Nueva promoción
         </button>
       </div>
 
