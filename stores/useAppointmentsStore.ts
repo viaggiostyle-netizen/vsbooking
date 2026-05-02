@@ -19,6 +19,7 @@ type CreateAppointmentArgs = {
   payload: BookingPayload
   promotions: Promotion[]
   groupId?: string
+  manualActiveIds?: string[]
 }
 
 type StoreState = {
@@ -72,7 +73,7 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
     syncWithAdminAppointments(appointments)
     set({ appointments })
   },
-  createAppointment: async ({ payload, promotions, groupId }) => {
+  createAppointment: async ({ payload, promotions, groupId, manualActiveIds = [] }) => {
     const bookingGroupId = groupId ?? createId()
 
     const serviceDurations = payload.services.map((service) => service.durationMin)
@@ -84,7 +85,8 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
         promotions,
         service.serviceName,
         payload.date,
-        service.groupQuantity || 1
+        service.groupQuantity || 1,
+        manualActiveIds
       )
 
       return {

@@ -1,10 +1,36 @@
 import type { Promotion } from "@/types/promotion"
 
-type PriceResult = {
+export type PromotionEvaluation = {
+  promotion: Promotion
+  eligible: boolean
+  reason?: string
+}
+
+export type PriceResult = {
   promotionId: string | null
   originalPrice: number
   discount: number
   finalPrice: number
+  evaluations: PromotionEvaluation[]
+}
+
+export function evaluatePromotion(
+  promotion: Promotion,
+  serviceName: string,
+  date: string,
+  serviceQuantity: number
+): { eligible: boolean; reason?: string } {
+  if (!promotion.active) return { eligible: false, reason: "La promoción está inactiva." }
+  if (date < promotion.startDate || date > promotion.endDate) {
+    return { eligible: false, reason: "La promoción no está vigente para esta fecha." }
+  }
+  if (promotion.applicableServices.length > 0 && !promotion.applicableServices.includes(serviceName)) {
+    return { eligible: false, reason: "No aplica para este servicio." }
+  }
+  if (promotion.requiredQuantity && serviceQuantity < promotion.requiredQuantity) {
+    return { eligible: false, reason: `Requiere al menos ${promotion.requiredQuantity} servicio(s), seleccionaste ${serviceQuantity}.` }
+  }
+  return { eligible: true }
 }
 
 export function calculateFinalPrice(
@@ -12,16 +38,21 @@ export function calculateFinalPrice(
   promotions: Promotion[],
   serviceName: string,
   date: string,
-  serviceQuantity: number = 1
+  serviceQuantity: number = 1,
+  manualActiveIds: string[] = []
 ): PriceResult {
-  const applicable = promotions.filter((promotion) => {
-    if (!promotion.active) return false
-    if (promotion.applicationMode !== "automatic") return false
-    if (date < promotion.startDate || date > promotion.endDate) return false
-    if (promotion.requiredQuantity && serviceQuantity < promotion.requiredQuantity) return false
-    if (promotion.applicableServices.length === 0) return true
-    return promotion.applicableServices.includes(serviceName)
-  })
+  const evaluations: PromotionEvaluation[] = promotions.map((promotion) => ({
+    promotion,
+    ...evaluatePromotion(promotion, serviceName, date, serviceQuantity)
+  }))
+
+  const applicable = evaluations
+    .filter((evalResult) => evalResult.eligible)
+    .map((evalResult) => evalResult.promotion)
+    .filter((promotion) => {
+      // Si es manual, debe estar en la lista de los activados manualmente.
+      return promotion.applicationMode === "automatic" || manualActiveIds.includes(promotion.id)
+    })
 
   if (applicable.length === 0) {
     return {
@@ -29,6 +60,7 @@ export function calculateFinalPrice(
       originalPrice,
       discount: 0,
       finalPrice: originalPrice,
+      evaluations,
     }
   }
 
@@ -48,10 +80,11 @@ export function calculateFinalPrice(
     originalPrice,
     discount: Math.max(0, originalPrice - bestFinalPrice),
     finalPrice: bestFinalPrice,
+    evaluations,
   }
 }
 
-function getDiscountedPrice(price: number, promotion: Promotion) {
+export function getDiscountedPrice(price: number, promotion: Promotion) {
   const discounted =
     promotion.type === "percentage"
       ? price - (price * promotion.value) / 100

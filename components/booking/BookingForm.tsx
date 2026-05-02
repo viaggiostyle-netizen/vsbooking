@@ -48,6 +48,7 @@ export default function BookingForm() {
   const [phoneTouched, setPhoneTouched] = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
   const [website, setWebsite] = useState("")
+  const [manualActiveIds, setManualActiveIds] = useState<string[]>([])
 
   const selectedServices = useMemo(() => {
     return selected
@@ -193,7 +194,8 @@ export default function BookingForm() {
       
       const createdGroupId = await createAppointment({ 
         payload, 
-        promotions
+        promotions,
+        manualActiveIds
       })
 
       clearSelection()
@@ -216,7 +218,11 @@ export default function BookingForm() {
         </p>
       </div>
 
-      <BookingSummary services={selectedServices} />
+      <BookingSummary 
+        services={selectedServices} 
+        manualActiveIds={manualActiveIds}
+        setManualActiveIds={setManualActiveIds}
+      />
 
       <ClientForm
         name={name}
