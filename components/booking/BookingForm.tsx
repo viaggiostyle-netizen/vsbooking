@@ -190,7 +190,10 @@ export default function BookingForm() {
         },
         date,
         selectedTimeValue,
-        currentService ? [{ service: currentService, quantity: 1 }] : []
+        currentService ? [{ 
+          service: currentService, 
+          quantity: selectedServices.find(s => s.service.id === currentService.id)?.quantity || 1 
+        }] : []
       )
       const createdGroupId = await createAppointment({ 
         payload, 

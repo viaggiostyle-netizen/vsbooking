@@ -348,7 +348,7 @@ function buildInitialState(editingPromotion: Promotion | null) {
         }
     }
 
-    const today = new Date().toISOString().slice(0, 10)
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" })
 
     return {
         name: "",

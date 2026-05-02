@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useMemo, useState } from "react"
 import { Search, Users, Check, UserX, EyeOff, XCircle } from "lucide-react"
@@ -96,7 +96,7 @@ export default function ClientesPage() {
         onDelete={(client) => deleteClient(client.id)}
       />
 
-      <div className="mt-8 flex flex-wrap items-center gap-6 text-[13px] font-medium text-muted/80">
+      <div className="mt-8 hidden md:flex flex-wrap items-center gap-6 text-[13px] font-medium text-muted/80">
         <div className="flex items-center gap-2">
           <Check size={14} className="text-emerald-500" />
           <span>Completadas</span>
