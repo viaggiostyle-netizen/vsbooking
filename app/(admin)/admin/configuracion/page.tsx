@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useMemo, useState } from "react"
 import {
@@ -405,7 +405,7 @@ export default function OrganizacionPage() {
       </section>
 
       {serviceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/70 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="w-full max-w-[520px] rounded-xl border border-surface bg-background p-4">
             <div className="mb-5 flex items-center justify-between">
               <h4 className="text-lg font-semibold">
@@ -504,7 +504,7 @@ export default function OrganizacionPage() {
       )}
 
       {scheduleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/70 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="w-full max-w-[540px] rounded-xl border border-surface bg-background p-4">
             <div className="mb-5 flex items-center justify-between">
               <h4 className="text-lg font-semibold">Editar Horario - {scheduleModal.dayLabel}</h4>
