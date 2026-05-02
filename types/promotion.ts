@@ -13,4 +13,5 @@ export type Promotion = {
   endDate: string
   active: boolean
   createdAt: string
+  requiredQuantity?: number
 }

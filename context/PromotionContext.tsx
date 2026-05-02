@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
 import {
@@ -92,6 +92,7 @@ function isPromotion(value: unknown): value is Promotion {
   if (typeof item.endDate !== "string") return false
   if (typeof item.active !== "boolean") return false
   if (typeof item.createdAt !== "string") return false
+  if (item.requiredQuantity !== undefined && typeof item.requiredQuantity !== "number") return false
 
   return true
 }

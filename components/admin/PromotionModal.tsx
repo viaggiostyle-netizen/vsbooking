@@ -33,6 +33,7 @@ export default function PromotionModal({
     const [startDate, setStartDate] = useState(initialState.startDate)
     const [endDate, setEndDate] = useState(initialState.endDate)
     const [active, setActive] = useState(initialState.active)
+    const [requiredQuantity, setRequiredQuantity] = useState(initialState.requiredQuantity ? String(initialState.requiredQuantity) : "")
     const [isSuccess, setIsSuccess] = useState(false)
     const [error, setError] = useState("")
 
@@ -56,6 +57,7 @@ export default function PromotionModal({
             startDate,
             endDate,
             active,
+            requiredQuantity: requiredQuantity ? Number(requiredQuantity) : undefined,
         })
 
         setIsSuccess(true)
@@ -157,6 +159,21 @@ export default function PromotionModal({
                                             />
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* Cantidad Mínima */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-muted/50 uppercase tracking-widest ml-1">Cantidad mínima sugerida (opcional)</label>
+                                    <div className="relative">
+                                        <Activity size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted/60" />
+                                        <input
+                                            value={requiredQuantity}
+                                            onChange={(e) => setRequiredQuantity(e.target.value)}
+                                            placeholder="Ej: 2"
+                                            className="h-10 w-full rounded-xl border border-border/30 bg-card/30 pl-10 pr-4 text-[13px] font-semibold outline-none focus:ring-1 focus:ring-foreground/10 placeholder:text-muted/30"
+                                        />
+                                    </div>
+                                    <p className="text-[11px] text-muted ml-1">Si se define, la promoción solo aplicará si el cliente selecciona esta cantidad o más del servicio requerido.</p>
                                 </div>
 
                                 {/* Fechas */}
@@ -327,6 +344,7 @@ function buildInitialState(editingPromotion: Promotion | null) {
             startDate: editingPromotion.startDate,
             endDate: editingPromotion.endDate,
             active: editingPromotion.active,
+            requiredQuantity: editingPromotion.requiredQuantity || null,
         }
     }
 
@@ -342,5 +360,6 @@ function buildInitialState(editingPromotion: Promotion | null) {
         startDate: today,
         endDate: today,
         active: true,
+        requiredQuantity: null,
     }
 }

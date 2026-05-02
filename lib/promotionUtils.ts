@@ -1,4 +1,4 @@
-﻿export type PromotionType = "percentage" | "fixed"
+export type PromotionType = "percentage" | "fixed"
 export type PromotionMode = "automatic" | "manual"
 
 export type Promotion = {
@@ -13,6 +13,7 @@ export type Promotion = {
   endDate: string
   active: boolean
   createdAt: string
+  requiredQuantity?: number
 }
 
 export type PromotionInput = Omit<Promotion, "id" | "createdAt">

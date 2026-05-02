@@ -11,12 +11,14 @@ export function calculateFinalPrice(
   originalPrice: number,
   promotions: Promotion[],
   serviceName: string,
-  date: string
+  date: string,
+  serviceQuantity: number = 1
 ): PriceResult {
   const applicable = promotions.filter((promotion) => {
     if (!promotion.active) return false
     if (promotion.applicationMode !== "automatic") return false
     if (date < promotion.startDate || date > promotion.endDate) return false
+    if (promotion.requiredQuantity && serviceQuantity < promotion.requiredQuantity) return false
     if (promotion.applicableServices.length === 0) return true
     return promotion.applicableServices.includes(serviceName)
   })

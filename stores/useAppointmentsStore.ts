@@ -83,7 +83,8 @@ export const useAppointmentsStore = create<StoreState>((set, get) => ({
         service.priceArs,
         promotions,
         service.serviceName,
-        payload.date
+        payload.date,
+        service.groupQuantity || 1
       )
 
       return {
@@ -213,6 +214,7 @@ export function buildBookingPayload(
       serviceName: service.name,
       durationMin: service.durationMin,
       priceArs: service.priceArs,
+      groupQuantity: quantity,
     }))
   )
 

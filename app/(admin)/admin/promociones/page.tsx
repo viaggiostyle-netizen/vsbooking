@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useMemo, useState } from "react"
 import { Plus, Tag, Pencil, Trash2, Percent } from "lucide-react"
@@ -123,9 +123,13 @@ export default function PromocionesPage() {
                   >
                     {promotion.active ? "En curso" : "Pausada"}
                   </button>
-                  <div className="flex justify-end gap-1 mt-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button onClick={() => openEdit(promotion)} className="rounded-full p-2 hover:bg-card ring-1 ring-border/20 shadow-sm"><Pencil size={14} /></button>
-                    <button onClick={() => deletePromotion(promotion.id)} className="rounded-full p-2 hover:bg-card ring-1 ring-border/20 shadow-sm"><Trash2 size={14} className="text-red-500" /></button>
+                  <div className="flex justify-end gap-1 mt-1 opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100">
+                    <button onClick={() => openEdit(promotion)} className="rounded-full p-2 bg-card/50 hover:bg-card ring-1 ring-border/20 shadow-sm"><Pencil size={14} /></button>
+                    <button onClick={() => {
+                      if (window.confirm("¿Seguro que deseas eliminar esta promoción?")) {
+                        deletePromotion(promotion.id)
+                      }
+                    }} className="rounded-full p-2 bg-red-500/10 hover:bg-red-500/20 ring-1 ring-red-500/20 shadow-sm"><Trash2 size={14} className="text-red-500" /></button>
                   </div>
                 </div>
               </div>

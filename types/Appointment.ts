@@ -37,5 +37,6 @@ export type BookingPayload = {
     serviceName: string
     durationMin: number
     priceArs: number
+    groupQuantity?: number
   }>
 }

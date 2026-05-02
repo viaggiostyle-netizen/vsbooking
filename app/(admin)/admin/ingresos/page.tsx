@@ -1,28 +1,41 @@
-﻿"use client"
+"use client"
 
 import React, { useMemo, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import {
+  ArrowDownRight,
+  ArrowUpRight,
   BarChart3,
+  Calendar,
   ChevronDown,
-  Download,
+  Clock3,
   DollarSign,
-  EyeOff,
+  Download,
+  ReceiptText,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
   UserRound,
   UserRoundPlus,
   Users,
-  Clock3,
-  TrendingUp,
-  Calendar,
-  TrendingDown,
-  ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react"
 import { useAppointments } from "@/context/AppointmentContext"
 import { useHasMounted } from "@/hooks/useHasMounted"
+import {
+  buildClientKeyFromAppointment,
+  buildDailyPerformance,
+  buildHourPerformance,
+  buildServicePerformance,
+  buildWeekdayPerformance,
+  formatDateKeyShort,
+  formatWeekdayShort,
+  isBookedAppointment,
+  isCompletedAppointment,
+  isOperationalClientAppointment,
+} from "@/lib/admin-insights"
 import type { Appointment } from "@/types/Appointment"
 
-const ARGENTINA_TZ = "America/Argentina/Buenos_Aires"
+const ARGENTINA_TZ = "America/Buenos_Aires"
 const MIN_MONTH = new Date(2026, 1, 1)
 const MAX_MONTH = new Date(2030, 11, 1)
 
@@ -30,13 +43,16 @@ type IncomeTab = "resumen" | "metricas"
 
 export default function IngresosPage() {
   const { appointments } = useAppointments()
-
+  const hasMounted = useHasMounted()
   const nowArgentina = useMemo(() => getNowArgentina(), [])
-  const defaultMonth = useMemo(() => clampMonth(startOfMonth(nowArgentina), MIN_MONTH, MAX_MONTH), [nowArgentina])
+  const defaultMonth = useMemo(
+    () => clampMonth(startOfMonth(nowArgentina), MIN_MONTH, MAX_MONTH),
+    [nowArgentina]
+  )
 
   const [activeTab, setActiveTab] = useState<IncomeTab>("resumen")
   const [selectedMonthKey, setSelectedMonthKey] = useState(toMonthKey(defaultMonth))
-  const hasMounted = useHasMounted()
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
 
   const monthOptions = useMemo(() => buildMonthOptions(MIN_MONTH, MAX_MONTH), [])
   const selectedMonth = useMemo(() => fromMonthKey(selectedMonthKey), [selectedMonthKey])
@@ -46,168 +62,247 @@ export default function IngresosPage() {
     () => appointments.filter((item) => item.date.startsWith(`${toMonthKey(selectedMonth)}-`)),
     [appointments, selectedMonth]
   )
-
   const previousMonthAppointments = useMemo(
     () => appointments.filter((item) => item.date.startsWith(`${toMonthKey(previousMonth)}-`)),
     [appointments, previousMonth]
   )
 
-  const totals = useMemo(() => {
-    const clientsBase = currentMonthAppointments.filter((item: Appointment) => isClientStatus(item.status))
-    const completed = currentMonthAppointments.filter((item: Appointment) => item.status === "completed")
+  const completedAppointments = useMemo(
+    () => currentMonthAppointments.filter(isCompletedAppointment),
+    [currentMonthAppointments]
+  )
+  const bookedAppointments = useMemo(
+    () => currentMonthAppointments.filter(isBookedAppointment),
+    [currentMonthAppointments]
+  )
 
-    const uniqueClients = uniqueClientKeys(clientsBase)
-    const totalIncome = completed.reduce((acc: number, item: Appointment) => acc + item.price, 0)
-
+  const weeklyOverview = useMemo(() => {
     const weeklyClients = [0, 0, 0, 0, 0]
     const weeklyIncome = [0, 0, 0, 0, 0]
 
-    completed.forEach((item: Appointment) => {
+    completedAppointments.forEach((item) => {
       const weekIndex = getWeekIndexInMonth(item.date)
       weeklyIncome[weekIndex] += item.price
     })
 
     for (let week = 0; week < 5; week += 1) {
       const set = new Set<string>()
-      clientsBase.forEach((item: Appointment) => {
+      bookedAppointments.forEach((item) => {
         if (getWeekIndexInMonth(item.date) === week) {
-          set.add(makeClientKey(item))
+          set.add(buildClientKeyFromAppointment(item))
         }
       })
       weeklyClients[week] = set.size
     }
 
-    return {
-      totalClients: uniqueClients.size,
-      totalIncome,
-      weeklyClients,
-      weeklyIncome,
-    }
-  }, [currentMonthAppointments])
+    return { weeklyClients, weeklyIncome }
+  }, [bookedAppointments, completedAppointments])
 
-  const metrics = useMemo(() => {
-    const currentClientsBase = currentMonthAppointments.filter((item: Appointment) => isClientStatus(item.status))
-    const previousClientsBase = previousMonthAppointments.filter((item: Appointment) => isClientStatus(item.status))
+  const businessMetrics = useMemo(() => {
+    const totalIncome = completedAppointments.reduce((sum, item) => sum + item.price, 0)
+    const uniqueClients = new Set(bookedAppointments.map(buildClientKeyFromAppointment))
+    const servicePerformance = buildServicePerformance(currentMonthAppointments)
+    const weekdayPerformance = buildWeekdayPerformance(currentMonthAppointments).filter(
+      (item) => item.weekday !== 0
+    )
+    const hourPerformance = buildHourPerformance(currentMonthAppointments)
+    const dailyPerformance = buildDailyPerformance(currentMonthAppointments)
+    const operationalAppointments = currentMonthAppointments.filter(isOperationalClientAppointment)
+    const previousOperational = previousMonthAppointments.filter(isOperationalClientAppointment)
 
-    const currentClients = uniqueClientKeys(currentClientsBase)
-    const previousClients = uniqueClientKeys(previousClientsBase)
+    const currentOperationalClients = new Set(
+      operationalAppointments.map(buildClientKeyFromAppointment)
+    )
+    const previousOperationalClients = new Set(
+      previousOperational.map(buildClientKeyFromAppointment)
+    )
+    const historicClientsBeforeCurrent = new Set<string>()
 
-    const historicBeforeCurrent = new Set<string>()
-    appointments.forEach((item: Appointment) => {
-      if (toMonthKeyFromDateKey(item.date) < toMonthKey(selectedMonth) && isClientStatus(item.status)) {
-        historicBeforeCurrent.add(makeClientKey(item))
+    appointments.forEach((item) => {
+      if (toMonthKeyFromDateKey(item.date) < toMonthKey(selectedMonth) && isOperationalClientAppointment(item)) {
+        historicClientsBeforeCurrent.add(buildClientKeyFromAppointment(item))
       }
     })
 
     let newClients = 0
     let recurrentClients = 0
-    currentClients.forEach((key: string) => {
-      if (historicBeforeCurrent.has(key)) recurrentClients += 1
+    currentOperationalClients.forEach((clientKey) => {
+      if (historicClientsBeforeCurrent.has(clientKey)) recurrentClients += 1
       else newClients += 1
     })
 
-    const hourDemand = new Map<string, number>()
-    currentMonthAppointments.filter((item: Appointment) => item.status === "completed").forEach((item: Appointment) => {
-      hourDemand.set(item.time, (hourDemand.get(item.time) ?? 0) + 1)
-    })
-    const topHours = [...hourDemand.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2)
-
-    const noShowCount = currentMonthAppointments.filter(
-      (item: Appointment) => item.status === "no_vino_no_aviso" || item.status === "no_show"
-    ).length
-    const noShowRate = currentMonthAppointments.length > 0 ? (noShowCount / currentMonthAppointments.length) * 100 : 0
-
-    const currentIncome = currentMonthAppointments.filter((item: Appointment) => item.status === "completed").reduce((acc: number, item: Appointment) => acc + item.price, 0)
-    const previousIncome = previousMonthAppointments.filter((item: Appointment) => item.status === "completed").reduce((acc: number, item: Appointment) => acc + item.price, 0)
-
     return {
+      totalIncome,
+      uniqueClients: uniqueClients.size,
+      completedCount: completedAppointments.length,
+      bookedCount: bookedAppointments.length,
+      averageTicket: completedAppointments.length > 0 ? totalIncome / completedAppointments.length : 0,
+      servicePerformance,
+      weekdayPerformance,
+      hourPerformance,
+      dailyPerformance,
       newClients,
       recurrentClients,
-      topHours,
-      noShowCount,
-      noShowRate,
-      comparisonClientsPct: percentageDiff(currentClients.size, previousClients.size),
-      comparisonIncomePct: percentageDiff(currentIncome, previousIncome),
+      clientsDelta: percentageDiff(currentOperationalClients.size, previousOperationalClients.size),
+      incomeDelta: percentageDiff(
+        totalIncome,
+        previousMonthAppointments.filter(isCompletedAppointment).reduce((sum, item) => sum + item.price, 0)
+      ),
       previousMonthLabel: monthLabel(previousMonth),
     }
-  }, [appointments, currentMonthAppointments, previousMonthAppointments, selectedMonth, previousMonth])
+  }, [
+    appointments,
+    bookedAppointments,
+    completedAppointments,
+    currentMonthAppointments,
+    previousMonthAppointments,
+    previousMonth,
+    selectedMonth,
+  ])
 
-  const [isPickerOpen, setIsPickerOpen] = useState(false)
+  const topServices = businessMetrics.servicePerformance.slice(0, 5)
+  const topWeekdays = businessMetrics.weekdayPerformance.slice(0, 5)
+  const topHours = businessMetrics.hourPerformance.slice(0, 5)
+  const latestDays = businessMetrics.dailyPerformance.slice(0, 7)
 
-  const downloadSummary = () => {
-    const lines = [
-      ["Mes", monthLabel(selectedMonth)],
-      ["Total clientes", String(totals.totalClients)],
-      ["Ingresos finales", String(totals.totalIncome)],
-      ["Semana", "Clientes", "Ingresos"],
-      ...Array.from({ length: 5 }, (_, index) => [
-        `Semana ${index + 1}`,
-        String(totals.weeklyClients[index]),
-        String(totals.weeklyIncome[index]),
+  const summaryCards = useMemo(
+    () => [
+      {
+        id: "income-clients",
+        title: "Clientes del mes",
+        value: String(businessMetrics.uniqueClients),
+        accentValue: false,
+        subtitle: `${businessMetrics.newClients} nuevos y ${businessMetrics.recurrentClients} recurrentes`,
+        icon: <Users size={18} />,
+        trend: businessMetrics.clientsDelta,
+      },
+      {
+        id: "income-total",
+        title: "Facturacion",
+        value: formatMoney(businessMetrics.totalIncome),
+        accentValue: true,
+        subtitle: `${businessMetrics.completedCount} turnos completados`,
+        icon: <DollarSign size={18} />,
+        trend: businessMetrics.incomeDelta,
+      },
+      {
+        id: "income-ticket",
+        title: "Ticket promedio",
+        value: formatMoney(businessMetrics.averageTicket),
+        accentValue: false,
+        subtitle: "Promedio por turno completado",
+        icon: <ReceiptText size={18} />,
+      },
+      {
+        id: "income-services",
+        title: "Servicios vendidos",
+        value: String(topServices.reduce((sum, item) => sum + item.completedCount, 0)),
+        accentValue: false,
+        subtitle: topServices[0] ? `${topServices[0].service} lidera el mes` : "Sin servicios completados",
+        icon: <Sparkles size={18} />,
+      },
+    ],
+    [businessMetrics, topServices]
+  )
+
+  const downloadReport = () => {
+    const lines: string[][] = [
+      ["Reporte mensual", monthLabel(selectedMonth)],
+      ["Facturacion", String(businessMetrics.totalIncome)],
+      ["Clientes unicos", String(businessMetrics.uniqueClients)],
+      ["Turnos completados", String(businessMetrics.completedCount)],
+      ["Ticket promedio", String(Math.round(businessMetrics.averageTicket))],
+      [],
+      ["Ranking de servicios"],
+      ["Servicio", "Turnos", "Facturacion", "Ticket promedio"],
+      ...businessMetrics.servicePerformance.map((item) => [
+        item.service,
+        String(item.completedCount),
+        String(item.revenue),
+        String(Math.round(item.averageTicket)),
+      ]),
+      [],
+      ["Cierre diario"],
+      ["Fecha", "Turnos agendados", "Completados", "Facturacion", "Ticket promedio"],
+      ...businessMetrics.dailyPerformance.map((item) => [
+        item.date,
+        String(item.bookedCount),
+        String(item.completedCount),
+        String(item.revenue),
+        String(Math.round(item.averageTicket)),
+      ]),
+      [],
+      ["Detalle de turnos"],
+      ["Fecha", "Hora", "Cliente", "Telefono", "Servicio", "Estado", "Importe"],
+      ...currentMonthAppointments.map((item) => [
+        item.date,
+        item.time,
+        item.clientName,
+        item.clientPhone,
+        item.service,
+        item.status,
+        String(item.price),
       ]),
     ]
 
     const csv = lines.map((line) => line.join(",")).join("\n")
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
-
     const link = document.createElement("a")
     link.href = url
-    link.download = `resumen-ingresos-${toMonthKey(selectedMonth)}.csv`
+    link.download = `ingresos-${toMonthKey(selectedMonth)}.csv`
     link.click()
-
     URL.revokeObjectURL(url)
-  }
-
-  const handleMonthChange = (key: string) => {
-    setSelectedMonthKey(key)
-    setIsPickerOpen(false)
   }
 
   if (!hasMounted) {
     return (
       <section className="mx-auto w-full max-w-[1200px] px-6 py-12 text-center">
-        <p className="text-muted italic animate-pulse">Cargando ingresos...</p>
+        <p className="animate-pulse italic text-muted">Cargando ingresos...</p>
       </section>
     )
   }
 
   return (
-    <section className="mx-auto w-full max-w-[1200px] px-6 py-6">
+    <section className="mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6">
       <header className="mb-8">
         <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-muted">Analitica</p>
         <h1 className="mt-1 text-3xl font-bold leading-tight tracking-tight">Panel de ingresos</h1>
         <p className="mt-1 text-sm font-medium text-muted">
-          Visualiza rendimiento mensual, tendencia y conversion operativa.
+          Mira facturacion, clientes, servicios y cierres del mes en una sola vista.
         </p>
       </header>
 
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
+      <div className="mb-6 flex flex-col gap-3 rounded-[28px] border border-border/20 bg-card/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
             <DollarSign size={20} />
           </div>
-          <div>
-            <h2 className="text-[13px] font-bold leading-none sm:text-[15px]">{monthLabel(selectedMonth)}</h2>
-            <p className="mt-1 text-[10px] text-muted font-medium sm:text-[11px]">Facturación y estadísticas</p>
+          <div className="min-w-0">
+            <h2 className="truncate text-[15px] font-bold sm:text-[16px]">{monthLabel(selectedMonth)}</h2>
+            <p className="mt-1 text-[11px] font-medium text-muted">Resumen comercial y operativo del periodo</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Custom Month Picker */}
-          <div className="relative">
+          <div className="relative min-w-0 flex-1 sm:flex-none">
             <motion.button
               whileTap={{ scale: 0.98 }}
-              onClick={() => setIsPickerOpen(!isPickerOpen)}
-              className="flex h-10 items-center gap-2 rounded-xl border border-border/30 bg-card/30 px-4 text-[12px] font-bold text-foreground transition-all hover:bg-card/50 sm:text-[13px]"
+              onClick={() => setIsPickerOpen((value) => !value)}
+              className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-border/30 bg-card/40 px-4 text-[12px] font-bold text-foreground transition-all hover:bg-card/60 sm:w-[220px] sm:text-[13px]"
             >
-              <Calendar size={14} className="text-muted" />
-              {monthLabel(selectedMonth)}
-              <ChevronDown size={14} className={`text-muted transition-transform duration-300 ${isPickerOpen ? "rotate-180" : ""}`} />
+              <span className="inline-flex min-w-0 items-center gap-2 truncate">
+                <Calendar size={14} className="shrink-0 text-muted" />
+                <span className="truncate">{monthLabel(selectedMonth)}</span>
+              </span>
+              <ChevronDown
+                size={14}
+                className={`shrink-0 text-muted transition-transform duration-300 ${isPickerOpen ? "rotate-180" : ""}`}
+              />
             </motion.button>
 
             <AnimatePresence>
-              {isPickerOpen && (
+              {isPickerOpen ? (
                 <>
                   <div
                     className="fixed inset-0 z-40 bg-black/5 backdrop-blur-[1px]"
@@ -218,209 +313,269 @@ export default function IngresosPage() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                    className="absolute right-0 top-full z-50 mt-2 h-[280px] w-[240px] overflow-y-auto rounded-3xl border border-border/50 bg-card/90 p-2 shadow-2xl backdrop-blur-2xl no-scrollbar"
+                    className="absolute right-0 top-full z-50 mt-2 h-[280px] w-full overflow-y-auto rounded-3xl border border-border/50 bg-card/90 p-2 shadow-2xl backdrop-blur-2xl no-scrollbar sm:w-[240px]"
                   >
                     <div className="p-2">
-                      <p className="text-[10px] font-bold text-muted/50 uppercase tracking-widest mb-2 px-2">Seleccionar Período</p>
+                      <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-muted/50">
+                        Seleccionar periodo
+                      </p>
                     </div>
-                    {monthOptions.map((option: { value: string; label: string }) => (
+                    {monthOptions.map((option) => (
                       <button
                         key={option.value}
-                        onClick={() => handleMonthChange(option.value)}
-                        className={`flex w-full items-center gap-3 border-none bg-transparent rounded-2xl px-4 py-3 text-left text-[13px] font-bold transition-all ${selectedMonthKey === option.value
-                          ? "bg-[var(--accent)] text-white"
-                          : "text-foreground/70 hover:bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] hover:text-foreground"
-                          }`}
+                        onClick={() => {
+                          setSelectedMonthKey(option.value)
+                          setIsPickerOpen(false)
+                        }}
+                        className={`flex w-full items-center gap-3 rounded-2xl border-none bg-transparent px-4 py-3 text-left text-[13px] font-bold transition-all ${
+                          selectedMonthKey === option.value
+                            ? "bg-[var(--accent)] text-white"
+                            : "text-foreground/70 hover:bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] hover:text-foreground"
+                        }`}
                       >
-                        <div className={`h-1.5 w-1.5 rounded-full ${selectedMonthKey === option.value ? "bg-white" : "bg-transparent"}`} />
+                        <div
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            selectedMonthKey === option.value ? "bg-white" : "bg-transparent"
+                          }`}
+                        />
                         {option.label}
                       </button>
                     ))}
                   </motion.div>
                 </>
-              )}
+              ) : null}
             </AnimatePresence>
           </div>
 
           <button
-            onClick={downloadSummary}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/30 bg-card/30 text-foreground transition-all hover:bg-card/50 active:scale-95"
-            title="Descargar CSV"
+            onClick={downloadReport}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/30 bg-card/40 text-foreground transition-all hover:bg-card/60 active:scale-95"
+            title="Descargar reporte CSV"
           >
             <Download size={16} />
           </button>
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-2 rounded-2xl border border-border/10 bg-card/30 p-1.5">
-        <TabButton active={activeTab === "resumen"} onClick={() => setActiveTab("resumen")} icon={<DollarSign size={16} />} label="Resumen General" />
-        <TabButton active={activeTab === "metricas"} onClick={() => setActiveTab("metricas")} icon={<BarChart3 size={16} />} label="Métricas Detalladas" />
+      <DashboardSummaryCards cards={summaryCards} />
+
+      <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl border border-border/10 bg-card/30 p-1.5">
+        <TabButton
+          active={activeTab === "resumen"}
+          onClick={() => setActiveTab("resumen")}
+          icon={<DollarSign size={16} />}
+          label="Resumen"
+        />
+        <TabButton
+          active={activeTab === "metricas"}
+          onClick={() => setActiveTab("metricas")}
+          icon={<BarChart3 size={16} />}
+          label="Metricas"
+        />
       </div>
 
-      {activeTab === "resumen" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <StatCard
+      {activeTab === "resumen" ? (
+        <div className="mt-6 space-y-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+            <ChartCard
+              title="Clientes por semana"
               icon={<Users size={18} />}
-              title="Clientes Atendidos"
-              value={String(totals.totalClients)}
-              trend={metrics.comparisonClientsPct}
-              description="Basado en completados y no-shows"
-              accent
-            />
-            <StatCard
-              icon={<DollarSign size={18} />}
-              title="Facturación Total"
-              value={formatMoney(totals.totalIncome)}
-              trend={metrics.comparisonIncomePct}
-              description="Solo turnos marcados como completados"
-              accent
+              summary={`Total de clientes unicos del mes: ${businessMetrics.uniqueClients}`}
+            >
+              <WeekBarChart
+                values={weeklyOverview.weeklyClients}
+                max={Math.max(1, ...weeklyOverview.weeklyClients)}
+                color="bg-[var(--accent)]"
+              />
+            </ChartCard>
+
+            <RankingCard
+              title="Servicios mas vendidos"
+              icon={<Sparkles size={18} className="text-amber-500" />}
+              emptyMessage="Todavia no hay servicios completados en el mes."
+              rows={topServices.map((item) => ({
+                label: item.service,
+                value: `${item.completedCount} turnos`,
+                detail: formatMoney(item.revenue),
+                ratio:
+                  businessMetrics.servicePerformance[0]?.completedCount
+                    ? (item.completedCount / businessMetrics.servicePerformance[0].completedCount) * 100
+                    : 0,
+              }))}
+              ratioColor="bg-amber-500"
             />
           </div>
 
-          <ChartCard
-            title="Control de Clientela"
-            icon={<UserRound size={18} />}
-            summary={`Total de clientes únicos este mes: ${totals.totalClients}`}
-          >
-            <WeekBarChart values={totals.weeklyClients} max={Math.max(1, ...totals.weeklyClients)} color="bg-[var(--accent)]" />
-          </ChartCard>
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
+            <ChartCard
+              title="Facturacion semanal"
+              icon={<DollarSign size={18} className="text-emerald-500" />}
+              summary={`Ingreso acumulado del periodo: ${formatMoney(businessMetrics.totalIncome)}`}
+            >
+              <WeekBarChart
+                values={weeklyOverview.weeklyIncome}
+                max={Math.max(1, ...weeklyOverview.weeklyIncome)}
+                color="bg-emerald-500"
+                money
+              />
+            </ChartCard>
 
-          <ChartCard
-            title="Facturación Semanal"
-            icon={<DollarSign size={18} className="text-emerald-500" />}
-            summary={`Ingresos acumulados del período: ${formatMoney(totals.totalIncome)}`}
-          >
-            <WeekBarChart values={totals.weeklyIncome} max={Math.max(1, ...totals.weeklyIncome)} color="bg-emerald-500" money />
-          </ChartCard>
+            <SummaryListCard
+              title="Cierre diario"
+              icon={<ReceiptText size={18} className="text-blue-500" />}
+              emptyMessage="No hay movimiento cargado en este mes."
+              rows={latestDays.map((item) => ({
+                heading: `${formatWeekdayShort(item.date)} ${formatDateKeyShort(item.date)}`,
+                primary: formatMoney(item.revenue),
+                secondary: `${item.completedCount} completados de ${item.bookedCount} agendados`,
+                tertiary:
+                  item.completedCount > 0
+                    ? `Ticket promedio ${formatMoney(item.averageTicket)}`
+                    : "Sin turnos completados",
+              }))}
+            />
+          </div>
         </div>
-      )}
+      ) : (
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <MetricSplitCard
+            title="Distribucion de clientes"
+            icon={<UserRound size={18} className="text-emerald-500" />}
+            items={[
+              {
+                label: "Nuevos",
+                value: String(businessMetrics.newClients),
+                tone: "emerald",
+                icon: <UserRoundPlus size={14} />,
+              },
+              {
+                label: "Recurrentes",
+                value: String(businessMetrics.recurrentClients),
+                tone: "blue",
+                icon: <UserRound size={14} />,
+              },
+            ]}
+            footerLabel="Base operativa del mes"
+            footerValue={String(businessMetrics.newClients + businessMetrics.recurrentClients)}
+          />
 
-      {activeTab === "metricas" && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <section className="glass-card overflow-hidden">
-            <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4 flex items-center gap-2">
-              <Users size={16} className="text-muted" />
-              <h3 className="text-[13px] font-bold sm:text-[14px]">Distribución de Clientes</h3>
-            </div>
-            <div className="p-5">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
-                      <UserRoundPlus size={14} />
-                    </div>
-                    <span className="text-[12px] font-semibold text-muted sm:text-[13px]">Nuevos</span>
-                  </div>
-                  <span className="text-[14px] font-bold sm:text-[15px]">{metrics.newClients}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
-                      <UserRound size={14} />
-                    </div>
-                    <span className="text-[12px] font-semibold text-muted sm:text-[13px]">Recurrentes</span>
-                  </div>
-                  <span className="text-[14px] font-bold sm:text-[15px]">{metrics.recurrentClients}</span>
-                </div>
-                <div className="mt-4 pt-4 border-t border-border/10">
-                  <p className="text-[11px] font-bold text-muted/50 uppercase tracking-widest leading-none">Total Unicicidad</p>
-                  <p className="mt-2 text-xl font-bold sm:text-2xl">{metrics.newClients + metrics.recurrentClients}</p>
-                </div>
-              </div>
-            </div>
-          </section>
+          <MetricSplitCard
+            title="Comparativa vs periodo anterior"
+            icon={<TrendingUp size={18} className="text-violet-500" />}
+            items={[
+              {
+                label: `Clientes vs ${businessMetrics.previousMonthLabel}`,
+                value: formatPercent(businessMetrics.clientsDelta),
+                tone: businessMetrics.clientsDelta >= 0 ? "emerald" : "rose",
+                icon: businessMetrics.clientsDelta >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />,
+              },
+              {
+                label: `Ingresos vs ${businessMetrics.previousMonthLabel}`,
+                value: formatPercent(businessMetrics.incomeDelta),
+                tone: businessMetrics.incomeDelta >= 0 ? "emerald" : "rose",
+                icon: businessMetrics.incomeDelta >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />,
+              },
+            ]}
+            footerLabel="Ticket promedio"
+            footerValue={formatMoney(businessMetrics.averageTicket)}
+          />
 
-          <section className="glass-card overflow-hidden">
-            <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4 flex items-center gap-2">
-              <Clock3 size={16} className="text-muted" />
-              <h3 className="text-[13px] font-bold sm:text-[14px]">Horas de Mayor Demanda</h3>
-            </div>
-            <div className="p-5 space-y-4">
-              {metrics.topHours.length === 0 ? (
-                <p className="text-[12px] text-muted italic">Sin datos registrados...</p>
-              ) : (
-                metrics.topHours.map(([time, count]: [string, number]) => {
-                  const maxCount = metrics.topHours[0][1]
-                  const percentage = (count / maxCount) * 100
-                  return (
-                    <div key={time} className="space-y-2">
-                      <div className="flex justify-between text-[11px] font-bold sm:text-[12px]">
-                        <span>{time} hs</span>
-                        <span className="text-muted">{count} turnos</span>
-                      </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-foreground/5">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{ duration: 0.8, ease: "easeOut" }}
-                          className="h-full bg-[var(--accent)]"
-                        />
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          </section>
+          <RankingCard
+            title="Dias mas ocupados"
+            icon={<Calendar size={18} className="text-sky-500" />}
+            emptyMessage="No hay turnos registrados para medir ocupacion."
+            rows={topWeekdays.map((item) => ({
+              label: item.label,
+              value: `${item.bookedCount} turnos`,
+              detail: formatMoney(item.revenue),
+              ratio:
+                businessMetrics.weekdayPerformance[0]?.bookedCount
+                  ? (item.bookedCount / businessMetrics.weekdayPerformance[0].bookedCount) * 100
+                  : 0,
+            }))}
+            ratioColor="bg-sky-500"
+          />
 
-          <section className="glass-card overflow-hidden">
-            <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4 flex items-center gap-2">
-              <EyeOff size={16} className="text-rose-500" />
-              <h3 className="text-[13px] font-bold sm:text-[14px]">Faltas y Cancelaciones</h3>
-            </div>
-            <div className="p-5">
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-rose-500 sm:text-3xl">{metrics.noShowRate.toFixed(1)}%</p>
-                  <p className="mt-1 text-[11px] font-semibold text-muted sm:text-[12px]">Tasa de No-Show</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[15px] font-bold sm:text-lg">{metrics.noShowCount}</p>
-                  <p className="text-[10px] font-bold text-muted/50 uppercase tracking-widest sm:text-[11px]">Incidentes</p>
-                </div>
-              </div>
-              <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-rose-500/10">
-                <div className="h-full bg-rose-500" style={{ width: `${metrics.noShowRate}%` }} />
-              </div>
-            </div>
-          </section>
-
-          <section className="glass-card overflow-hidden">
-            <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4 flex items-center gap-2">
-              <TrendingUp size={16} className="text-muted" />
-              <h3 className="text-[13px] font-bold sm:text-[14px]">Vs. Período Anterior ({metrics.previousMonthLabel})</h3>
-            </div>
-            <div className="p-5 grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold text-muted/50 uppercase tracking-widest">Crec. Clientes</p>
-                <div className={`flex items-center gap-1 text-[15px] font-bold sm:text-[17px] ${metrics.comparisonClientsPct >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                  {metrics.comparisonClientsPct >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                  {formatPercent(metrics.comparisonClientsPct)}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold text-muted/50 uppercase tracking-widest">Crec. Ingresos</p>
-                <div className={`flex items-center gap-1 text-[15px] font-bold sm:text-[17px] ${metrics.comparisonIncomePct >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                  {metrics.comparisonIncomePct >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                  {formatPercent(metrics.comparisonIncomePct)}
-                </div>
-              </div>
-            </div>
-          </section>
+          <RankingCard
+            title="Franjas mas activas"
+            icon={<Clock3 size={18} className="text-orange-500" />}
+            emptyMessage="No hay horarios registrados en el periodo."
+            rows={topHours.map((item) => ({
+              label: `${item.time} hs`,
+              value: `${item.bookedCount} turnos`,
+              detail:
+                item.completedCount > 0
+                  ? `${item.completedCount} completados`
+                  : "Sin completados",
+              ratio:
+                businessMetrics.hourPerformance[0]?.bookedCount
+                  ? (item.bookedCount / businessMetrics.hourPerformance[0].bookedCount) * 100
+                  : 0,
+            }))}
+            ratioColor="bg-orange-500"
+          />
         </div>
       )}
     </section>
   )
 }
 
-function isClientStatus(status: Appointment["status"]) {
+type SummaryCard = {
+  id: string
+  title: string
+  value: string
+  subtitle: string
+  icon: React.ReactNode
+  accentValue?: boolean
+  trend?: number
+}
+
+function DashboardSummaryCards({ cards }: { cards: SummaryCard[] }) {
   return (
-    status === "completed" ||
-    status === "no_vino_aviso" ||
-    status === "no_vino_no_aviso" ||
-    status === "no_show_with_notice" ||
-    status === "no_show"
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map((card) => {
+        const isPositive = card.trend == null || card.trend >= 0
+
+        return (
+          <motion.article
+            key={card.id}
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="glass-card relative overflow-hidden p-5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground/5 text-foreground">
+                {card.icon}
+              </div>
+              {card.trend != null ? (
+                <div
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ${
+                    isPositive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+                  }`}
+                >
+                  {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                  {Math.abs(card.trend).toFixed(1)}%
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted/50 sm:text-[11px]">
+                {card.title}
+              </p>
+              <p
+                className={`mt-1 text-2xl font-bold tracking-tight sm:text-3xl ${
+                  card.accentValue ? "text-emerald-500" : "text-foreground"
+                }`}
+              >
+                {card.value}
+              </p>
+            </div>
+
+            <p className="mt-4 text-[10px] font-medium text-muted/40 sm:text-[11px]">{card.subtitle}</p>
+          </motion.article>
+        )
+      })}
+    </div>
   )
 }
 
@@ -437,10 +592,11 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[12px] font-bold transition-all duration-300 sm:text-[13px] ${active
-        ? "bg-[var(--accent)] text-white shadow-lg shadow-[rgba(37,99,235,0.24)]"
-        : "text-muted hover:text-foreground hover:bg-[color-mix(in_srgb,var(--accent)_12%,transparent)]"
-        }`}
+      className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[12px] font-bold transition-all duration-300 sm:text-[13px] ${
+        active
+          ? "bg-[var(--accent)] text-white shadow-lg shadow-[rgba(37,99,235,0.24)]"
+          : "text-muted hover:bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] hover:text-foreground"
+      }`}
     >
       {icon}
       {label}
@@ -448,55 +604,13 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
   )
 }
 
-type StatCardProps = {
-  icon: React.ReactElement<{ size?: number }>
-  title: string;
-  value: string;
-  accent?: boolean;
-  trend?: number;
-  description?: string;
-}
-function StatCard({ icon, title, value, accent, trend, description }: StatCardProps) {
-  const isPositive = (trend || 0) >= 0
-
-  return (
-    <motion.article
-      whileHover={{ y: -4, scale: 1.01 }}
-      className="glass-card relative overflow-hidden p-5"
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/12 text-emerald-500">
-          {icon}
-        </div>
-        {trend !== undefined && (
-          <div className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ${isPositive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
-            }`}>
-            {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-            {Math.abs(trend).toFixed(1)}%
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4">
-        <p className="text-[10px] font-bold text-muted/50 uppercase tracking-widest sm:text-[11px]">{title}</p>
-        <p className={`mt-1 text-2xl font-bold tracking-tight sm:text-3xl ${accent ? "text-emerald-500" : "text-foreground"}`}>
-          {value}
-        </p>
-      </div>
-
-      {description && (
-        <p className="mt-4 text-[10px] font-medium text-muted/40 sm:text-[11px]">{description}</p>
-      )}
-
-      {/* Background Decor */}
-      <div className="absolute -right-4 -bottom-4 opacity-[0.03] text-foreground rotate-12 pointer-events-none">
-        {React.cloneElement(icon, { size: 100 })}
-      </div>
-    </motion.article>
-  )
+type ChartCardProps = {
+  title: string
+  icon: React.ReactNode
+  summary: string
+  children: React.ReactNode
 }
 
-type ChartCardProps = { title: string; icon: React.ReactNode; summary: string; children: React.ReactNode }
 function ChartCard({ title, icon, summary, children }: ChartCardProps) {
   return (
     <section className="glass-card overflow-hidden">
@@ -506,40 +620,51 @@ function ChartCard({ title, icon, summary, children }: ChartCardProps) {
           <h3 className="text-[14px] font-bold leading-none">{title}</h3>
         </div>
       </div>
-      <div className="p-6">
+      <div className="p-5 sm:p-6">
         {children}
-        <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-card/30 py-2 px-4">
-          <p className="text-[12px] font-bold text-[#F2F2F2]">{summary}</p>
+        <div className="mt-6 flex items-center justify-center rounded-xl bg-card/30 px-4 py-2">
+          <p className="text-center text-[12px] font-bold text-[#F2F2F2]">{summary}</p>
         </div>
       </div>
     </section>
   )
 }
 
-function WeekBarChart({ values, max, color, money }: { values: number[]; max: number; color: string; money?: boolean }) {
+function WeekBarChart({
+  values,
+  max,
+  color,
+  money,
+}: {
+  values: number[]
+  max: number
+  color: string
+  money?: boolean
+}) {
   return (
-    <div className="grid grid-cols-5 gap-4">
+    <div className="grid grid-cols-5 gap-3 sm:gap-4">
       {values.map((value, index) => {
         const ratio = max > 0 ? value / max : 0
         const height = Math.max(4, ratio * 100)
         return (
           <div key={index} className="group flex flex-col items-center">
-            <div className="relative flex h-32 w-full items-end justify-center rounded-2xl bg-card/30 p-1 transition-all duration-300 group-hover:bg-card/50">
+            <div className="relative flex h-28 w-full items-end justify-center rounded-2xl bg-card/30 p-1 sm:h-32">
               <motion.div
                 initial={{ height: 0 }}
                 animate={{ height: `${height}%` }}
-                transition={{ duration: 1, ease: "circOut", delay: index * 0.1 }}
+                transition={{ duration: 0.8, ease: "circOut", delay: index * 0.08 }}
                 className={`w-full max-w-[32px] rounded-xl shadow-lg shadow-[rgba(37,99,235,0.22)] ${color}`}
               />
 
-              {/* Tooltip on hover */}
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 transition-all duration-300 group-hover:-top-10 group-hover:opacity-100">
                 <div className="rounded-lg bg-[var(--accent)] px-2 py-1 text-[10px] font-bold text-white shadow-xl">
                   {money ? formatMoney(value) : `${value} cli.`}
                 </div>
               </div>
             </div>
-            <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-muted/40 group-hover:text-muted transition-colors">Sem {index + 1}</p>
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-muted/40 transition-colors group-hover:text-muted">
+              Sem {index + 1}
+            </p>
           </div>
         )
       })}
@@ -547,16 +672,165 @@ function WeekBarChart({ values, max, color, money }: { values: number[]; max: nu
   )
 }
 
-function uniqueClientKeys(appointments: Appointment[]) {
-  const set = new Set<string>()
-  appointments.forEach((item) => set.add(makeClientKey(item)))
-  return set
+type RankingRow = {
+  label: string
+  value: string
+  detail: string
+  ratio: number
 }
 
-function makeClientKey(item: Appointment) {
-  const phone = item.clientPhone.trim()
-  if (phone) return `phone:${phone}`
-  return `name:${item.clientName.trim().toLowerCase()}`
+function RankingCard({
+  title,
+  icon,
+  rows,
+  ratioColor,
+  emptyMessage,
+}: {
+  title: string
+  icon: React.ReactNode
+  rows: RankingRow[]
+  ratioColor: string
+  emptyMessage: string
+}) {
+  return (
+    <section className="glass-card overflow-hidden">
+      <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h3 className="text-[14px] font-bold leading-none">{title}</h3>
+        </div>
+      </div>
+      <div className="p-5">
+        {rows.length === 0 ? (
+          <p className="text-[12px] italic text-muted">{emptyMessage}</p>
+        ) : (
+          <div className="space-y-4">
+            {rows.map((row) => (
+              <div key={`${row.label}-${row.value}`} className="space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-bold text-foreground">{row.label}</p>
+                    <p className="mt-1 text-[11px] font-medium text-muted">{row.detail}</p>
+                  </div>
+                  <span className="shrink-0 text-[12px] font-bold text-foreground">{row.value}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-foreground/5">
+                  <div className={`h-full ${ratioColor}`} style={{ width: `${row.ratio}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+type SummaryListRow = {
+  heading: string
+  primary: string
+  secondary: string
+  tertiary: string
+}
+
+function SummaryListCard({
+  title,
+  icon,
+  rows,
+  emptyMessage,
+}: {
+  title: string
+  icon: React.ReactNode
+  rows: SummaryListRow[]
+  emptyMessage: string
+}) {
+  return (
+    <section className="glass-card overflow-hidden">
+      <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h3 className="text-[14px] font-bold leading-none">{title}</h3>
+        </div>
+      </div>
+      <div className="p-5">
+        {rows.length === 0 ? (
+          <p className="text-[12px] italic text-muted">{emptyMessage}</p>
+        ) : (
+          <div className="space-y-3">
+            {rows.map((row) => (
+              <article
+                key={row.heading}
+                className="rounded-2xl border border-border/20 bg-card/20 px-4 py-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[13px] font-bold text-foreground">{row.heading}</p>
+                  <span className="text-[13px] font-bold text-emerald-500">{row.primary}</span>
+                </div>
+                <p className="mt-2 text-[12px] font-medium text-foreground/80">{row.secondary}</p>
+                <p className="mt-1 text-[11px] font-medium text-muted">{row.tertiary}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+type MetricSplitItem = {
+  label: string
+  value: string
+  tone: "emerald" | "blue" | "rose"
+  icon: React.ReactNode
+}
+
+function MetricSplitCard({
+  title,
+  icon,
+  items,
+  footerLabel,
+  footerValue,
+}: {
+  title: string
+  icon: React.ReactNode
+  items: MetricSplitItem[]
+  footerLabel: string
+  footerValue: string
+}) {
+  const toneClassMap: Record<MetricSplitItem["tone"], string> = {
+    emerald: "bg-emerald-500/10 text-emerald-500",
+    blue: "bg-blue-500/10 text-blue-500",
+    rose: "bg-rose-500/10 text-rose-500",
+  }
+
+  return (
+    <section className="glass-card overflow-hidden">
+      <div className="border-b border-border/10 bg-white/[0.02] px-5 py-4">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h3 className="text-[14px] font-bold leading-none">{title}</h3>
+        </div>
+      </div>
+      <div className="space-y-4 p-5">
+        {items.map((item) => (
+          <div key={`${item.label}-${item.value}`} className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${toneClassMap[item.tone]}`}>
+                {item.icon}
+              </div>
+              <span className="text-[12px] font-semibold text-muted sm:text-[13px]">{item.label}</span>
+            </div>
+            <span className="shrink-0 text-[15px] font-bold sm:text-[17px]">{item.value}</span>
+          </div>
+        ))}
+
+        <div className="border-t border-border/10 pt-4">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted/50">{footerLabel}</p>
+          <p className="mt-2 text-2xl font-bold">{footerValue}</p>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function getWeekIndexInMonth(dateKey: string) {
@@ -565,15 +839,72 @@ function getWeekIndexInMonth(dateKey: string) {
   return Math.min(4, Math.floor((day - 1) / 7))
 }
 
-function toMonthKeyFromDateKey(dateKey: string) { return dateKey.slice(0, 7) }
-function percentageDiff(current: number, previous: number) { if (previous === 0) return current === 0 ? 0 : 200; return ((current - previous) / previous) * 100 }
-function formatPercent(value: number) { const sign = value >= 0 ? "+" : ""; return `${sign}${value.toFixed(1)}%` }
-function formatMoney(value: number) { return `$ ${value.toLocaleString("es-AR")}` }
-function getNowArgentina() { const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: ARGENTINA_TZ, year: "numeric", month: "2-digit", day: "2-digit" }); const [year, month, day] = formatter.format(new Date()).split("-").map(Number); return new Date(year, month - 1, day) }
-function startOfMonth(date: Date) { return new Date(date.getFullYear(), date.getMonth(), 1) }
-function addMonths(date: Date, months: number) { return new Date(date.getFullYear(), date.getMonth() + months, 1) }
-function clampMonth(date: Date, min: Date, max: Date) { const value = toMonthKey(date); if (value < toMonthKey(min)) return min; if (value > toMonthKey(max)) return max; return date }
-function buildMonthOptions(min: Date, max: Date) { const options: Array<{ value: string; label: string }> = []; let cursor = new Date(min.getFullYear(), min.getMonth(), 1); while (toMonthKey(cursor) <= toMonthKey(max)) { options.push({ value: toMonthKey(cursor), label: monthLabel(cursor) }); cursor = addMonths(cursor, 1) } return options }
-function toMonthKey(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}` }
-function fromMonthKey(value: string) { const [year, month] = value.split("-").map(Number); return new Date(year, month - 1, 1) }
-function monthLabel(date: Date) { const value = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(date); return value.charAt(0).toUpperCase() + value.slice(1) }
+function toMonthKeyFromDateKey(dateKey: string) {
+  return dateKey.slice(0, 7)
+}
+
+function percentageDiff(current: number, previous: number) {
+  if (previous === 0) return current === 0 ? 0 : 200
+  return ((current - previous) / previous) * 100
+}
+
+function formatPercent(value: number) {
+  const sign = value >= 0 ? "+" : ""
+  return `${sign}${value.toFixed(1)}%`
+}
+
+function formatMoney(value: number) {
+  return `$ ${Math.round(value).toLocaleString("es-AR")}`
+}
+
+function getNowArgentina() {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: ARGENTINA_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+  const [year, month, day] = formatter.format(new Date()).split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+function addMonths(date: Date, months: number) {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1)
+}
+
+function clampMonth(date: Date, min: Date, max: Date) {
+  const value = toMonthKey(date)
+  if (value < toMonthKey(min)) return min
+  if (value > toMonthKey(max)) return max
+  return date
+}
+
+function buildMonthOptions(min: Date, max: Date) {
+  const options: Array<{ value: string; label: string }> = []
+  let cursor = new Date(min.getFullYear(), min.getMonth(), 1)
+
+  while (toMonthKey(cursor) <= toMonthKey(max)) {
+    options.push({ value: toMonthKey(cursor), label: monthLabel(cursor) })
+    cursor = addMonths(cursor, 1)
+  }
+
+  return options
+}
+
+function toMonthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+}
+
+function fromMonthKey(value: string) {
+  const [year, month] = value.split("-").map(Number)
+  return new Date(year, month - 1, 1)
+}
+
+function monthLabel(date: Date) {
+  const value = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(date)
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
