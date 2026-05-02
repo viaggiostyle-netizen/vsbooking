@@ -48,8 +48,6 @@ export default function BookingForm() {
   const [phoneTouched, setPhoneTouched] = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
   const [website, setWebsite] = useState("")
-  const [currentServiceIndex, setCurrentServiceIndex] = useState(0)
-  const [bookingGroupId, setBookingGroupId] = useState<string | null>(null)
 
   const selectedServices = useMemo(() => {
     return selected
@@ -67,12 +65,12 @@ export default function BookingForm() {
     )
   }, [selectedServices])
 
-  const currentService = flatServices[currentServiceIndex]
-
   const totalDuration = useMemo(
-    () => (currentService ? currentService.durationMin : 0),
-    [currentService]
+    () => flatServices.reduce((sum, service) => sum + service.durationMin, 0),
+    [flatServices]
   )
+
+
 
   const availableSlots = useMemo<AnnotatedSlot[]>(() => {
     return getAnnotatedSlots({
@@ -190,29 +188,16 @@ export default function BookingForm() {
         },
         date,
         selectedTimeValue,
-        currentService ? [{ 
-          service: currentService, 
-          quantity: selectedServices.find(s => s.service.id === currentService.id)?.quantity || 1 
-        }] : []
+        selectedServices
       )
+      
       const createdGroupId = await createAppointment({ 
         payload, 
-        promotions,
-        groupId: bookingGroupId ?? undefined 
+        promotions
       })
 
-      if (!bookingGroupId) {
-        setBookingGroupId(createdGroupId)
-      }
-
-      if (currentServiceIndex < flatServices.length - 1) {
-        setCurrentServiceIndex((prev) => prev + 1)
-        setSelectedTime("")
-        window.scrollTo({ top: 0, behavior: "smooth" })
-      } else {
-        clearSelection()
-        router.push(`/confirmation?group=${bookingGroupId || createdGroupId}`)
-      }
+      clearSelection()
+      router.push(`/confirmation?group=${createdGroupId}`)
     } catch {
       setError("No se pudo guardar la reserva. Intenta nuevamente.")
     } finally {
@@ -224,12 +209,10 @@ export default function BookingForm() {
     <section className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          {flatServices.length > 1 ? `Cita ${currentServiceIndex + 1} de ${flatServices.length}` : "Reserva tu cita"}
+          Reserva tu cita
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {flatServices.length > 1 
-            ? `Completa los datos para el servicio: ${currentService.name}`
-            : "Completa tus datos y selecciona fecha y hora."}
+          Completa tus datos y selecciona fecha y hora.
         </p>
       </div>
 
@@ -308,11 +291,7 @@ export default function BookingForm() {
           disabled={!canSubmit}
           className="h-12 w-full rounded-full bg-foreground text-background font-semibold transition-all hover:opacity-90 disabled:opacity-50"
         >
-          {isSubmitting 
-            ? "Validando..." 
-            : flatServices.length > 1 
-              ? `Agendar cita ${currentServiceIndex + 1}` 
-              : "Agendar cita"}
+          {isSubmitting ? "Validando..." : "Agendar cita"}
         </Button>
 
         <button

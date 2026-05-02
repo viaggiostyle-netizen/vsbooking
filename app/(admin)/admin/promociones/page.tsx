@@ -14,6 +14,7 @@ export default function PromocionesPage() {
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Promotion | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [modalVersion, setModalVersion] = useState(0)
   const hasMounted = useHasMounted()
 
@@ -125,11 +126,7 @@ export default function PromocionesPage() {
                   </button>
                   <div className="flex justify-end gap-1 mt-1 opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100">
                     <button onClick={() => openEdit(promotion)} className="rounded-full p-2 bg-card/50 hover:bg-card ring-1 ring-border/20 shadow-sm"><Pencil size={14} /></button>
-                    <button onClick={() => {
-                      if (window.confirm("¿Seguro que deseas eliminar esta promoción?")) {
-                        deletePromotion(promotion.id)
-                      }
-                    }} className="rounded-full p-2 bg-red-500/10 hover:bg-red-500/20 ring-1 ring-red-500/20 shadow-sm"><Trash2 size={14} className="text-red-500" /></button>
+                    <button onClick={() => setDeleteConfirmId(promotion.id)} className="rounded-full p-2 bg-red-500/10 hover:bg-red-500/20 ring-1 ring-red-500/20 shadow-sm"><Trash2 size={14} className="text-red-500" /></button>
                   </div>
                 </div>
               </div>
@@ -146,6 +143,35 @@ export default function PromocionesPage() {
         editingPromotion={editing}
         services={services}
       />
+
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+          <div className="glass-card w-full max-w-[360px] p-6 text-center animate-apple-in">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-500">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="mb-2 text-lg font-bold tracking-tight">¿Eliminar promoción?</h3>
+            <p className="mb-6 text-[13px] text-muted">La oferta se borrará permanentemente y ya no se aplicará en futuras reservas.</p>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setDeleteConfirmId(null)} 
+                className="flex-1 rounded-2xl bg-muted/10 font-bold py-3 text-[13px] hover:bg-muted/20 transition-all text-muted-foreground"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => { 
+                  deletePromotion(deleteConfirmId)
+                  setDeleteConfirmId(null) 
+                }} 
+                className="flex-1 rounded-2xl bg-red-500 text-white font-bold py-3 text-[13px] hover:bg-red-600/90 shadow-lg shadow-red-500/20 transition-all active:scale-[0.98]"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
