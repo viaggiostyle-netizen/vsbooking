@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { createContext, useContext, useEffect, useMemo, useReducer } from "react"
 import {
@@ -53,7 +53,7 @@ type StoreValue = {
   setAppointments: (appointments: Appointment[]) => void
   createAppointment: (input: CreateAppointmentInput) => void
   updateAppointment: (id: string, patch: Partial<Omit<Appointment, "id">>) => void
-  deleteAppointment: (id: string) => void
+  deleteAppointment: (id: string) => Promise<boolean>
   setAppointmentStatus: (id: string, status: AppointmentStatus) => void
   editClient: (input: EditClientInput) => void
   deleteClient: (clientId: string) => void
@@ -89,10 +89,21 @@ export function AppointmentProvider({ children }: { children: React.ReactNode })
         dispatch({ type: "SET_APPOINTMENTS", payload: appointments }),
       createAppointment: (input) => dispatch({ type: "CREATE_APPOINTMENT", payload: input }),
       updateAppointment: (id, patch) => dispatch({ type: "UPDATE_APPOINTMENT", payload: { id, patch } }),
-      deleteAppointment: (id) => dispatch({ type: "DELETE_APPOINTMENT", payload: { id } }),
-      setAppointmentStatus: (id, status) => dispatch({ type: "SET_APPOINTMENT_STATUS", payload: { id, status } }),
+      setAppointmentStatus: (id, status) =>
+        dispatch({ type: "SET_APPOINTMENT_STATUS", payload: { id, status } }),
       editClient: (input) => dispatch({ type: "EDIT_CLIENT", payload: input }),
       deleteClient: (clientId) => dispatch({ type: "DELETE_CLIENT", payload: { clientId } }),
+      deleteAppointment: async (id) => {
+        try {
+          const { deleteAppointmentFromSupabase } = await import("@/lib/supabase/appointments")
+          await deleteAppointmentFromSupabase(id)
+          dispatch({ type: "DELETE_APPOINTMENT", payload: { id } })
+          return true
+        } catch (err) {
+          console.error("Failed to delete from supabase", err)
+          return false
+        }
+      },
       isTimeBooked: (date, time) =>
         state.appointments.some(
           (item) => item.date === date && item.time === time && item.status !== "cancelled"

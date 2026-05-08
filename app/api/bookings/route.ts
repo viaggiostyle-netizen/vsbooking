@@ -30,6 +30,8 @@ function getSupabaseRestConfig() {
 type BookingPatchBody = {
   id: string
   clientEmail?: string
+  clientName?: string
+  clientPhone?: string
   status?: Appointment["status"]
   date?: string
   time?: string
@@ -308,6 +310,8 @@ export async function PATCH(req: Request) {
   }
 
   const legacyPayload: Record<string, unknown> = {}
+  if (body.clientName != null) legacyPayload.client_name = body.clientName
+  if (body.clientPhone != null) legacyPayload.client_phone = body.clientPhone
   if (body.status != null) {
     legacyPayload.status = toLegacyAppointmentStatus(
       toCanonicalAppointmentStatus(body.status)
@@ -450,7 +454,7 @@ export async function DELETE(req: Request) {
 
   const existingBooking = await getBookingById(body.id)
 
-  let res = await fetch(
+  const bookingsRes = await fetch(
     `${config.baseUrl}/bookings?id=eq.${encodeURIComponent(body.id)}`,
     {
       method: "DELETE",
@@ -462,23 +466,23 @@ export async function DELETE(req: Request) {
     }
   )
 
-  if (!res.ok) {
-    res = await fetch(
-      `${config.baseUrl}/appointments?id=eq.${encodeURIComponent(body.id)}`,
-      {
-        method: "DELETE",
-        headers: {
-          apikey: config.serviceRoleKey,
-          Authorization: `Bearer ${config.serviceRoleKey}`,
-        },
-        cache: "no-store",
-      }
-    )
-  }
+  const appointmentsRes = await fetch(
+    `${config.baseUrl}/appointments?id=eq.${encodeURIComponent(body.id)}`,
+    {
+      method: "DELETE",
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+      },
+      cache: "no-store",
+    }
+  )
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "")
-    console.error("Bookings API DELETE:", res.status, text)
+  if (!bookingsRes.ok && !appointmentsRes.ok) {
+    const bookingsText = await bookingsRes.text().catch(() => "")
+    const appointmentsText = await appointmentsRes.text().catch(() => "")
+    console.error("Bookings API DELETE:", bookingsRes.status, bookingsText)
+    console.error("Appointments API DELETE:", appointmentsRes.status, appointmentsText)
     return NextResponse.json(
       { message: "No se pudo eliminar la reserva." },
       { status: 500 }

@@ -20,15 +20,25 @@ export function evaluatePromotion(
   date: string,
   serviceQuantity: number
 ): { eligible: boolean; reason?: string } {
-  if (!promotion.active) return { eligible: false, reason: "La promoción está inactiva." }
+  if (!promotion.active) return { eligible: false, reason: "La promocion esta inactiva." }
   if (date < promotion.startDate || date > promotion.endDate) {
-    return { eligible: false, reason: "La promoción no está vigente para esta fecha." }
+    return { eligible: false, reason: "La promocion no esta vigente para esta fecha." }
   }
-  if (promotion.applicableServices.length > 0 && !promotion.applicableServices.includes(serviceName)) {
+  if (
+    promotion.applicableServices.length > 0 &&
+    !promotion.applicableServices.includes(serviceName)
+  ) {
     return { eligible: false, reason: "No aplica para este servicio." }
   }
   if (promotion.requiredQuantity && serviceQuantity < promotion.requiredQuantity) {
-    return { eligible: false, reason: `Requiere al menos ${promotion.requiredQuantity} servicio(s), seleccionaste ${serviceQuantity}.` }
+    const unitLabel = promotion.requiredQuantity === 1 ? "servicio" : "servicios"
+    const selectedLabel =
+      serviceQuantity === 1 ? "seleccionaste 1" : `seleccionaste ${serviceQuantity}`
+
+    return {
+      eligible: false,
+      reason: `Requiere al menos ${promotion.requiredQuantity} ${unitLabel} iguales; ${selectedLabel}. Si al asistir son menos personas o servicios de los acordados, la promocion no se aplicara.`,
+    }
   }
   return { eligible: true }
 }
@@ -43,15 +53,16 @@ export function calculateFinalPrice(
 ): PriceResult {
   const evaluations: PromotionEvaluation[] = promotions.map((promotion) => ({
     promotion,
-    ...evaluatePromotion(promotion, serviceName, date, serviceQuantity)
+    ...evaluatePromotion(promotion, serviceName, date, serviceQuantity),
   }))
 
   const applicable = evaluations
     .filter((evalResult) => evalResult.eligible)
     .map((evalResult) => evalResult.promotion)
     .filter((promotion) => {
-      // Si es manual, debe estar en la lista de los activados manualmente.
-      return promotion.applicationMode === "automatic" || manualActiveIds.includes(promotion.id)
+      return (
+        promotion.applicationMode === "automatic" || manualActiveIds.includes(promotion.id)
+      )
     })
 
   if (applicable.length === 0) {

@@ -47,6 +47,8 @@ const LEGACY_BOOKINGS_SELECT =
 type AppointmentPatch = Partial<
   Pick<
     Appointment,
+    | "clientName"
+    | "clientPhone"
     | "date"
     | "time"
     | "status"
@@ -180,6 +182,8 @@ export async function patchAppointmentInSupabase(
   if (!supabase) return false
 
   const appointmentsPayload: Partial<AppointmentsRow> = {}
+  if (patch.clientName) appointmentsPayload.client_name = patch.clientName
+  if (patch.clientPhone) appointmentsPayload.client_phone = patch.clientPhone
   if (patch.date) appointmentsPayload.appointment_date = patch.date
   if (patch.time) appointmentsPayload.appointment_time = patch.time
   if (patch.status) {
@@ -208,6 +212,8 @@ export async function patchAppointmentInSupabase(
   if (updatedAppointments) return true
 
   const legacyPayload: Partial<LegacyBookingRow> = {}
+  if (patch.clientName) legacyPayload.client_name = patch.clientName
+  if (patch.clientPhone) legacyPayload.client_phone = patch.clientPhone
   if (patch.date) legacyPayload.date = patch.date
   if (patch.time) legacyPayload.time = patch.time
   if (patch.status) {
@@ -239,8 +245,38 @@ export async function patchAppointmentInSupabase(
     .from("bookings")
     .update(legacyPayload)
     .eq("id", id)
-
   return !legacyError
+}
+
+export async function deleteAppointmentFromSupabase(id: string): Promise<boolean> {
+  if (typeof window !== "undefined") {
+    const res = await fetch("/api/bookings", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    })
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { message?: string } | null
+      throw new Error(payload?.message ?? "No se pudo eliminar la reserva.")
+    }
+    return true
+  }
+
+  const supabase = getSupabaseClient()
+  if (!supabase) return false
+
+  const { error: legacyError } = await supabase
+    .from("bookings")
+    .delete()
+    .eq("id", id)
+
+  const { error: appointmentsError } = await supabase
+    .from("appointments")
+    .delete()
+    .eq("id", id)
+
+  if (!legacyError || !appointmentsError) return true
+  return false
 }
 
 function normalizeAppointmentsRow(value: unknown): Appointment | null {

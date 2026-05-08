@@ -1,11 +1,11 @@
-import { Clock3, Tag, AlertCircle, Info, CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Clock3, Info, Tag } from "lucide-react"
+import { useEffect, useMemo } from "react"
+import { getTodayDateKeyArgentina } from "@/lib/date"
+import { calculateFinalPrice } from "@/lib/pricing"
 import { formatMoney } from "@/lib/utils"
+import { usePromotionsStore } from "@/stores/usePromotionsStore"
 import type { Service } from "@/types/service"
 import type { Promotion } from "@/types/promotion"
-import { usePromotionsStore } from "@/stores/usePromotionsStore"
-import { calculateFinalPrice } from "@/lib/pricing"
-import { getTodayDateKeyArgentina } from "@/lib/date"
-import { useMemo, useState } from "react"
 
 type BookingSummaryProps = {
   services: Array<{ service: Service; quantity: number }>
@@ -13,20 +13,43 @@ type BookingSummaryProps = {
   setManualActiveIds: (ids: string[]) => void
 }
 
-export default function BookingSummary({ services, manualActiveIds, setManualActiveIds }: BookingSummaryProps) {
+type PromotionSummary = {
+  promotion: Promotion
+  discountAmount: number
+}
+
+type PromotionEvaluationSummary = {
+  promotion: Promotion
+  eligible: boolean
+  reason?: string
+}
+
+export default function BookingSummary({
+  services,
+  manualActiveIds,
+  setManualActiveIds,
+}: BookingSummaryProps) {
   const promotions = usePromotionsStore((state) => state.promotions)
   const today = getTodayDateKeyArgentina()
 
-  const { totalPrice, totalOriginalPrice, totalDuration, label, appliedPromos, evaluationsList } = useMemo(() => {
+  const {
+    totalPrice,
+    totalOriginalPrice,
+    totalDuration,
+    label,
+    appliedPromos,
+    evaluationsList,
+    eligibleManualPromotionIds,
+  } = useMemo(() => {
     let price = 0
     let originalPrice = 0
     let duration = 0
-    const promos: { name: string; mode: string, discountAmount: number }[] = []
-    const evaluations = new Map<string, { promotion: Promotion, eligible: boolean, reason?: string }>()
-    
+    const promos = new Map<string, PromotionSummary>()
+    const evaluations = new Map<string, PromotionEvaluationSummary>()
+
     services.forEach((item) => {
       duration += item.service.durationMin * item.quantity
-      
+
       const pricing = calculateFinalPrice(
         item.service.priceArs,
         promotions,
@@ -39,37 +62,73 @@ export default function BookingSummary({ services, manualActiveIds, setManualAct
       price += pricing.finalPrice * item.quantity
       originalPrice += item.service.priceArs * item.quantity
 
-      pricing.evaluations.forEach(ev => {
-         const prev = evaluations.get(ev.promotion.id)
-         if (!prev || (!prev.eligible && ev.eligible)) {
-             evaluations.set(ev.promotion.id, ev)
-         }
+      pricing.evaluations.forEach((evaluation) => {
+        const previous = evaluations.get(evaluation.promotion.id)
+        if (!previous || (!previous.eligible && evaluation.eligible)) {
+          evaluations.set(evaluation.promotion.id, evaluation)
+        }
       })
 
       if (pricing.promotionId) {
-        const promo = promotions.find(p => p.id === pricing.promotionId)
-        if (promo && !promos.find(p => p.name === promo.name)) {
-          promos.push({ name: promo.name, mode: promo.applicationMode, discountAmount: pricing.discount })
+        const promotion = promotions.find((itemPromotion) => itemPromotion.id === pricing.promotionId)
+        if (promotion) {
+          const previousDiscount = promos.get(promotion.id)?.discountAmount ?? 0
+          promos.set(promotion.id, {
+            promotion,
+            discountAmount: previousDiscount + pricing.discount * item.quantity,
+          })
         }
       }
     })
+
+    const evaluationsList = Array.from(evaluations.values())
+    const eligibleManualPromotionIds = evaluationsList
+      .filter(
+        (evaluation) =>
+          evaluation.eligible && evaluation.promotion.applicationMode === "manual"
+      )
+      .map((evaluation) => evaluation.promotion.id)
 
     return {
       totalPrice: price,
       totalOriginalPrice: originalPrice,
       totalDuration: duration,
-      label: services.map((item) => `${item.service.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}`).join(", "),
-      appliedPromos: promos,
-      evaluationsList: Array.from(evaluations.values())
+      label: services
+        .map((item) => `${item.service.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}`)
+        .join(", "),
+      appliedPromos: Array.from(promos.values()),
+      evaluationsList,
+      eligibleManualPromotionIds,
     }
   }, [services, promotions, today, manualActiveIds])
 
+  useEffect(() => {
+    const nextManualIds = manualActiveIds.filter((id) =>
+      eligibleManualPromotionIds.includes(id)
+    )
+
+    if (nextManualIds.length !== manualActiveIds.length) {
+      setManualActiveIds(nextManualIds)
+    }
+  }, [eligibleManualPromotionIds, manualActiveIds, setManualActiveIds])
+
+  const toggleManualPromotion = (promotionId: string) => {
+    if (manualActiveIds.includes(promotionId)) {
+      setManualActiveIds(manualActiveIds.filter((id) => id !== promotionId))
+      return
+    }
+
+    setManualActiveIds([...manualActiveIds, promotionId])
+  }
+
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="p-6">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0 pr-3">
-            <p className="truncate text-base font-semibold leading-tight text-foreground">{label || "Sin servicio seleccionado"}</p>
+            <p className="truncate text-base font-semibold leading-tight text-foreground">
+              {label || "Sin servicio seleccionado"}
+            </p>
             <p className="mt-2 flex items-center gap-1.5 text-sm text-muted">
               <Clock3 size={14} />
               {totalDuration || 0} min
@@ -77,66 +136,87 @@ export default function BookingSummary({ services, manualActiveIds, setManualAct
           </div>
           <div className="text-right">
             {totalPrice < totalOriginalPrice && (
-              <p className="text-xs text-muted-foreground line-through mb-1">{formatMoney(totalOriginalPrice)}</p>
+              <p className="mb-1 text-xs text-muted-foreground line-through">
+                {formatMoney(totalOriginalPrice)}
+              </p>
             )}
-            <p className="text-base font-semibold leading-none text-foreground">{formatMoney(totalPrice)}</p>
+            <p className="text-base font-semibold leading-none text-foreground">
+              {formatMoney(totalPrice)}
+            </p>
           </div>
         </div>
       </div>
-      
-      {/* Automatic Application Results */}
-      {appliedPromos.map((promo, i) => (
-        <div key={i} className="bg-emerald-500/10 border-t border-emerald-500/20 p-4">
+
+      {appliedPromos.map(({ promotion, discountAmount }) => (
+        <div
+          key={promotion.id}
+          className="border-t border-emerald-500/20 bg-emerald-500/10 p-4"
+        >
           <div className="flex items-start gap-2 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
             <p className="text-sm font-medium">
-              Valor {formatMoney(totalPrice)} por promoción {promo.mode === "automatic" ? "automática" : "manual"} activada: <strong>{promo.name}</strong>
+              Se aplico la promocion{" "}
+              {promotion.applicationMode === "automatic" ? "automatica" : "manual"}{" "}
+              <strong>{promotion.name}</strong>. Ahorras {formatMoney(discountAmount)}.
             </p>
           </div>
         </div>
       ))}
 
-      {/* Manual Promotions & Rejections Explanation */}
       {evaluationsList.length > 0 && (
-        <div className="bg-muted/5 border-t border-border/40 p-4 space-y-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted">Disponibilidad de Ofertas</p>
-          
-          {evaluationsList.map((ev, i) => {
-            const isManualActive = manualActiveIds.includes(ev.promotion.id)
-            const isApplied = appliedPromos.some(p => p.name === ev.promotion.name)
+        <div className="space-y-3 border-t border-border/40 bg-muted/5 p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">
+            Disponibilidad de ofertas
+          </p>
 
-            if (ev.eligible) {
-              if (ev.promotion.applicationMode === "automatic") return null; // Already shown above
-              
-              if (isApplied) return null; // Already displayed as activated!
+          {evaluationsList.map((evaluation, index) => {
+            const isManualActive = manualActiveIds.includes(evaluation.promotion.id)
+
+            if (evaluation.eligible) {
+              if (evaluation.promotion.applicationMode === "automatic") return null
 
               return (
-                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-border/50 bg-card/50">
+                <div
+                  key={index}
+                  className="flex flex-col justify-between gap-3 rounded-lg border border-border/50 bg-card/50 p-3 sm:flex-row sm:items-center"
+                >
                   <div className="flex items-start gap-2">
                     <Tag size={16} className="mt-0.5 text-[var(--accent)]" />
                     <div>
-                      <p className="text-sm font-semibold">{ev.promotion.name}</p>
-                      <p className="text-xs text-muted">Oferta manual elegible para tu reserva.</p>
+                      <p className="text-sm font-semibold">{evaluation.promotion.name}</p>
+                      <p className="text-xs text-muted">
+                        {isManualActive
+                          ? "Oferta manual activada para tu reserva."
+                          : "Oferta manual elegible para tu reserva."}
+                      </p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => setManualActiveIds([...manualActiveIds, ev.promotion.id])}
-                    className="shrink-0 rounded-full bg-[var(--accent)] text-white px-4 py-1.5 text-xs font-bold hover:bg-[var(--accent-strong)] transition-colors"
+                  <button
+                    onClick={() => toggleManualPromotion(evaluation.promotion.id)}
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+                      isManualActive
+                        ? "bg-foreground text-background hover:opacity-85"
+                        : "bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]"
+                    }`}
                   >
-                    Activar Promoción
+                    {isManualActive ? "Quitar promocion" : "Activar promocion"}
                   </button>
                 </div>
               )
-            } else {
-              return (
-                <div key={i} className="flex items-start gap-2 text-muted-foreground p-2">
-                  <Info size={16} className="mt-0.5 shrink-0 opacity-70" />
-                  <p className="text-xs leading-relaxed">
-                    Tu promoción <strong>{ev.promotion.name}</strong> no se ha podido activar por los siguientes motivos: {ev.reason}
-                  </p>
-                </div>
-              )
             }
+
+            return (
+              <div
+                key={index}
+                className="flex items-start gap-2 p-2 text-muted-foreground"
+              >
+                <Info size={16} className="mt-0.5 shrink-0 opacity-70" />
+                <p className="text-xs leading-relaxed">
+                  Tu promocion <strong>{evaluation.promotion.name}</strong> no se pudo activar
+                  por los siguientes motivos: {evaluation.reason}
+                </p>
+              </div>
+            )
           })}
         </div>
       )}

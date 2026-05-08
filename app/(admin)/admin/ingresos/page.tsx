@@ -33,7 +33,6 @@ import {
   isCompletedAppointment,
   isOperationalClientAppointment,
 } from "@/lib/admin-insights"
-import type { Appointment } from "@/types/Appointment"
 
 const ARGENTINA_TZ = "America/Buenos_Aires"
 const MIN_MONTH = new Date(2026, 1, 1)

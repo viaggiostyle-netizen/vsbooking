@@ -11,7 +11,6 @@ import { useSettings } from "@/context/SettingsContext"
 import { useTimeBlocks } from "@/context/TimeBlockContext"
 import {
   cancelAppointment,
-  deleteAppointment as deleteFromSupabase,
   updateAppointmentStatus,
 } from "@/lib/appointments"
 import {
@@ -311,8 +310,8 @@ function AgendaPageContent() {
     setAppointmentActionError("")
 
     try {
-      await deleteFromSupabase(selectedAppointment.id)
-      deleteAppointment(selectedAppointment.id)
+      const deleted = await deleteAppointment(selectedAppointment.id)
+      if (!deleted) throw new Error("No se pudo eliminar la cita")
       setAppointmentModalOpen(false)
       setSelectedAppointment(null)
     } catch {
