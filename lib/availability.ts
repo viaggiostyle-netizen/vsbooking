@@ -143,9 +143,22 @@ export function buildConsecutiveTimes(startTime: string, durations: number[]) {
   const times: string[] = []
   let cursor = startTime
 
-  durations.forEach((duration) => {
+  durations.forEach(() => {
     times.push(cursor)
-    cursor = addMinutes(cursor, duration)
+    
+    // El cliente requiere que el siguiente turno caiga estrictamente en el patron :00 y :40
+    // Si es :00 -> pasa a :40
+    // Si es :40 -> pasa a (h+1):00
+    const [hStr, mStr] = cursor.split(":")
+    let hour = parseInt(hStr, 10)
+    const minute = parseInt(mStr, 10)
+
+    if (minute === 0) {
+      cursor = `${String(hour).padStart(2, "0")}:40`
+    } else {
+      hour += 1
+      cursor = `${String(hour).padStart(2, "0")}:00`
+    }
   })
 
   return times
