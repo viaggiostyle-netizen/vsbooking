@@ -7,11 +7,14 @@ import { isAdmin } from "@/lib/isAdmin"
 export const dynamic = "force-dynamic"
 
 function readAdminAccessCode() {
-  return (
+  const configuredCode =
     process.env.ADMIN_ACCESS_CODE?.trim() ||
-    process.env.NEXT_PUBLIC_ADMIN_ACCESS_CODE?.trim() ||
-    "482731"
-  )
+    process.env.NEXT_PUBLIC_ADMIN_ACCESS_CODE?.trim()
+
+  if (isValidAdminAccessCode(configuredCode)) return configuredCode
+  if (process.env.NODE_ENV !== "production") return "482731"
+
+  return ""
 }
 
 function isValidAdminAccessCode(value: string) {
@@ -41,7 +44,14 @@ export async function POST(request: Request) {
   const code = typeof body === "object" && body && "code" in body ? String((body as { code?: unknown }).code ?? "") : ""
   const expectedCode = readAdminAccessCode()
 
-  if (!isValidAdminAccessCode(code) || !isValidAdminAccessCode(expectedCode)) {
+  if (!isValidAdminAccessCode(expectedCode)) {
+    return NextResponse.json(
+      { ok: false, message: "No hay un código de acceso válido configurado en el entorno." },
+      { status: 500 }
+    )
+  }
+
+  if (!isValidAdminAccessCode(code)) {
     return NextResponse.json({ ok: false, message: "Código inválido." }, { status: 400 })
   }
 
