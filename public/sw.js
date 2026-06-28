@@ -68,7 +68,9 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
-  self.skipWaiting();
+  // Do not auto-claim clients here; allow waiting worker to be activated
+  // when client explicitly requests (skipWaiting). This lets the app prompt
+  // users before reloading to a new version.
 });
 
 self.addEventListener("activate", (event) => {
@@ -83,8 +85,29 @@ self.addEventListener("activate", (event) => {
         )
       )
   );
-  self.clients.claim();
+  // Claim clients and inform them of the active cache version.
+  event.waitUntil(
+    (async () => {
+      await self.clients.claim();
+      const allClients = await self.clients.matchAll({ includeUncontrolled: true });
+      for (const client of allClients) {
+        client.postMessage({ type: "SW_ACTIVATED", version: CACHE_NAME });
+      }
+    })()
+  );
 });
+
+// Listen for messages from clients (e.g., request to skip waiting)
+self.addEventListener("message", (event) => {
+  try {
+    const data = event.data || {}
+    if (data && data.type === "SKIP_WAITING") {
+      self.skipWaiting()
+    }
+  } catch (e) {
+    // ignore
+  }
+})
 
 messaging.onBackgroundMessage((payload) => {
   console.log("[sw.js] Received background message", payload);

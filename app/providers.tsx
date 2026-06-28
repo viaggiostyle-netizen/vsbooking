@@ -7,6 +7,7 @@ import { SettingsProvider } from "@/context/SettingsContext"
 import { TimeBlockProvider } from "@/context/TimeBlockContext"
 import AdminInAppAppointmentNotifier from "@/components/notifications/AdminInAppAppointmentNotifier"
 import { SessionProvider } from "next-auth/react"
+import AuthExpiryHandler from "@/components/auth/AuthExpiryHandler"
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -16,8 +17,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <TimeBlockProvider>
             <PromotionProvider>
               <AppointmentProvider>
-                <AdminInAppAppointmentNotifier />
-                {children}
+                  <AdminInAppAppointmentNotifier />
+                  <AuthExpiryHandler />
+                  {children}
               </AppointmentProvider>
             </PromotionProvider>
           </TimeBlockProvider>

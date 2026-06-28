@@ -15,11 +15,13 @@ export async function middleware(req: NextRequest) {
 
   if (pathname.startsWith("/admin")) {
     if (!token?.email) {
+      console.warn(`[middleware] unauthenticated access to ${pathname} from ${req.ip || req.headers.get('x-forwarded-for') || 'unknown'}`)
       return NextResponse.redirect(homeUrl)
     }
 
     const isAuthorized = await checkIfEmailIsAdmin(String(token.email))
     if (!isAuthorized) {
+      console.warn(`[middleware] forbidden for ${token.email} on ${pathname}`)
       return NextResponse.redirect(homeUrl)
     }
   }
@@ -32,6 +34,7 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(buildUrl("/admin", req))
       }
 
+      console.info(`[middleware] authenticated non-admin ${token.email} attempted /auth; redirecting to home`)
       return NextResponse.redirect(homeUrl)
     }
   }

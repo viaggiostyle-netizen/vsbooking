@@ -6,11 +6,7 @@
   "crons": [
     {
       "path": "/api/cron/supabase-keepalive",
-      "schedule": "0 15 * * 1"
-    },
-    {
-      "path": "/api/cron/supabase-keepalive",
-      "schedule": "0 15 * * 4"
+      "schedule": "*/5 * * * *"
     }
   ]
 }

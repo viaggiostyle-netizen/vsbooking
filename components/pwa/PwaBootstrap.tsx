@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { registerAppServiceWorker } from "@/lib/service-worker-client"
+import SWUpdateHandler from "@/components/pwa/SWUpdateHandler"
 
 const APPLE_ICON_LIGHT = "/icons/icon-light-512.png"
 const APPLE_ICON_DARK = "/icons/icon-dark-512.png"
@@ -49,4 +50,14 @@ export default function PwaBootstrap() {
   }, [])
 
   return null
+}
+
+// Export a wrapper that mounts the SW update handler when the component is used.
+export function PwaBootstrapWithUpdate() {
+  return (
+    <>
+      <PwaBootstrap />
+      <SWUpdateHandler />
+    </>
+  )
 }

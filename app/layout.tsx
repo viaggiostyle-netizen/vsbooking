@@ -2,7 +2,7 @@ import "./globals.css"
 import { DM_Sans, Playfair_Display } from "next/font/google"
 import type { Metadata, Viewport } from "next"
 import { ThemeProvider } from "next-themes"
-import PwaBootstrap from "@/components/pwa/PwaBootstrap"
+import PwaBootstrap, { PwaBootstrapWithUpdate } from "@/components/pwa/PwaBootstrap"
 import Providers from "./providers"
 import { AppToastProvider } from "@/components/ui/ToastProvider"
 
@@ -99,7 +99,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Providers>{children}</Providers>
           <AppToastProvider />
-          <PwaBootstrap />
+          <PwaBootstrapWithUpdate />
         </ThemeProvider>
       </body>
     </html>

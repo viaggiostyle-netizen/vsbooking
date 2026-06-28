@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
+import { LockKeyhole } from "lucide-react"
 import AdminShell from "@/components/admin/AdminLayout"
 import Sidebar, { type SidebarSection } from "@/components/admin/Sidebar"
 import {
@@ -83,6 +84,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement | null>(null)
   const [isWhitelistedAdmin, setIsWhitelistedAdmin] = useState(false)
+  const [isAccessVerified, setIsAccessVerified] = useState(false)
+  const [accessCode, setAccessCode] = useState("")
+  const [accessError, setAccessError] = useState("")
+  const [isAccessChecking, setIsAccessChecking] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -159,11 +164,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleSwitchAccount = () => {
     setUserMenuOpen(false)
+    setIsAccessVerified(false)
+    setAccessCode("")
+    setAccessError("")
     void signIn("google", { callbackUrl: "/admin" }, { prompt: "select_account" })
   }
 
   const handleSignOut = async () => {
     setUserMenuOpen(false)
+    setIsAccessVerified(false)
+    setAccessCode("")
+    setAccessError("")
     const token = pushToken || getStoredAdminPushToken()
     if (token) {
       await disableAdminPushNotifications()
@@ -279,6 +290,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   useEffect(() => {
     if (status !== "authenticated") {
       setIsWhitelistedAdmin(false)
+      setIsAccessVerified(false)
+      setAccessCode("")
+      setAccessError("")
       return
     }
 
@@ -299,12 +313,60 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [status])
 
+  useEffect(() => {
+    if (status !== "authenticated") {
+      setIsAccessVerified(false)
+      return
+    }
 
+    if (!isWhitelistedAdmin) {
+      setIsAccessVerified(false)
+      return
+    }
+  }, [isWhitelistedAdmin, status])
+
+  const handleAccessSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const cleanCode = accessCode.trim()
+
+    if (!/^\d{6}$/.test(cleanCode)) {
+      setAccessError("Ingresá un código de 6 dígitos.")
+      return
+    }
+
+    setIsAccessChecking(true)
+    setAccessError("")
+
+    try {
+      const response = await fetch("/api/auth/admin-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: cleanCode }),
+      })
+
+      const payload = (await response.json().catch(() => ({ ok: false, message: "No se pudo verificar el código." }))) as {
+        ok?: boolean
+        message?: string
+      }
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.message || "Código incorrecto.")
+      }
+
+      setIsAccessVerified(true)
+      setAccessCode("")
+      setAccessError("")
+    } catch (error) {
+      setAccessError(error instanceof Error ? error.message : "No se pudo verificar el código.")
+    } finally {
+      setIsAccessChecking(false)
+    }
+  }
 
   const renderSidebarFooter = (showLabels: boolean) => (
     <button
       onClick={() => setTheme(dark ? "light" : "dark")}
-      className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-[15px] font-semibold text-muted transition-all duration-200 hover:bg-[var(--hover)] hover:text-foreground"
+      className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-[15px] font-semibold text-muted transition-all duration-200 hover:bg-(--hover) hover:text-foreground"
     >
       {dark ? <Moon size={18} /> : <Sun size={18} />}
       <span
@@ -338,6 +400,60 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       variant="drawer"
     />
   )
+
+  if (status === "authenticated" && isWhitelistedAdmin && !isAccessVerified) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.16),_transparent_55%)] px-4 py-10">
+        <div className="w-full max-w-[420px] rounded-[28px] border border-border/70 bg-card/95 p-6 shadow-[0_28px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:p-8">
+          <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-[color-mix(in_srgb,var(--background)_78%,transparent)] text-foreground">
+            <LockKeyhole size={22} />
+          </div>
+          <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-foreground">
+            Acceso protegido
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Ingresá el código de 6 dígitos para entrar al panel de administración.
+          </p>
+
+          <form className="mt-6 space-y-3" onSubmit={handleAccessSubmit}>
+            <label className="block text-sm font-semibold text-foreground" htmlFor="admin-access-code">
+              Código de acceso
+            </label>
+            <input
+              id="admin-access-code"
+              name="admin-access-code"
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              value={accessCode}
+              onChange={(event) => setAccessCode(event.target.value.replace(/\D/g, ""))}
+              autoComplete="one-time-code"
+              className="h-12 w-full rounded-2xl border border-border/70 bg-background px-4 text-[16px] font-semibold tracking-[0.35em] text-foreground outline-none ring-0 focus:border-ring"
+              placeholder="123456"
+            />
+            <button
+              type="submit"
+              disabled={isAccessChecking}
+              className="flex h-11 w-full items-center justify-center rounded-2xl bg-foreground px-4 text-sm font-semibold text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isAccessChecking ? "Verificando..." : "Entrar al panel"}
+            </button>
+          </form>
+
+          {accessError && <p className="mt-3 text-sm font-medium text-rose-500">{accessError}</p>}
+
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="mt-4 text-sm font-semibold text-muted transition-colors hover:text-foreground"
+          >
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <AdminShell
